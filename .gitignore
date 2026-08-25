@@ -1,0 +1,15 @@
+# Dependencias y build
+node_modules/
+.vercel
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Entorno
+.env
+.env.*
+
+# Nota: assets/js/config.js SI se commitea (opcion A de docs/06-despliegue.md).
+# La anon key es publica por diseno y toda la seguridad la aplica RLS.
+# Lo que nunca entra aqui es la service_role key.

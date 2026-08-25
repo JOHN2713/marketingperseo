@@ -1,0 +1,155 @@
+/* =====================================================================
+   MKT Process · Shell, menu lateral y grid de contenido
+   ===================================================================== */
+
+/* --- Pantalla de acceso -------------------------------------------- */
+.auth {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  background: var(--paper);
+}
+.auth__box { width: 100%; max-width: 380px; }
+.auth__brand { text-align: center; margin-bottom: var(--s-6); }
+.auth__logo { width: 40px; height: 40px; margin: 0 auto var(--s-3); }
+.auth__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.auth__rule { width: 56px; height: 2px; background: var(--accent); margin: var(--s-3) auto; }
+.auth__tag { color: var(--ink-500); font-size: var(--fs-sm); }
+.auth__card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-sm);
+}
+.auth__links {
+  display: flex; justify-content: center; gap: var(--s-3);
+  margin-top: var(--s-4); font-size: var(--fs-sm);
+}
+.auth__links button {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--ink-500); text-decoration: underline; text-underline-offset: 3px;
+}
+.auth__links button:hover { color: var(--accent); }
+
+/* --- Shell ---------------------------------------------------------- */
+.shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+.sidebar {
+  background: var(--ink-900);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-4) var(--s-3);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.sidebar__brand {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) var(--s-5);
+}
+.sidebar__brand img { width: 26px; height: 26px; }
+.sidebar__brand span {
+  font-family: var(--font-display); font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; font-size: var(--fs-sm);
+}
+.sidebar__nav { display: flex; flex-direction: column; gap: 2px; }
+.sidebar__section {
+  font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(255,255,255,.38); padding: var(--s-5) var(--s-3) var(--s-2);
+}
+.navlink {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  color: rgba(255,255,255,.72);
+  font-size: var(--fs-base);
+  text-decoration: none;
+  transition: background .12s var(--ease), color .12s var(--ease);
+}
+.navlink:hover { background: rgba(255,255,255,.07); color: #fff; text-decoration: none; }
+.navlink[aria-current="page"] { background: rgba(255,255,255,.12); color: #fff; font-weight: 500; }
+.navlink__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,.28); flex: 0 0 auto;
+}
+.navlink[aria-current="page"] .navlink__dot { background: #A78BFA; }
+.navlink__count {
+  margin-left: auto;
+  font-family: var(--font-data); font-size: var(--fs-xs);
+  min-width: 20px; height: 18px; padding: 0 5px;
+  display: grid; place-items: center;
+  background: var(--pr-urgente); color: #fff; border-radius: 9px;
+}
+
+.sidebar__foot { margin-top: auto; border-top: 1px solid rgba(255,255,255,.1); padding-top: var(--s-3); }
+.sidebar__user { padding: var(--s-2) var(--s-3); }
+.sidebar__user b { display: block; font-weight: 500; font-size: var(--fs-sm); }
+.sidebar__user small { color: rgba(255,255,255,.45); font-size: var(--fs-xs); }
+
+.sidebar__toggle { display: none; }
+
+.main { min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  display: none;
+  align-items: center; gap: var(--s-3);
+  height: var(--header-h);
+  padding: 0 var(--s-4);
+  background: var(--ink-900); color: #fff;
+  position: sticky; top: 0; z-index: 30;
+}
+
+.view { padding: var(--s-6) var(--s-6) var(--s-8); max-width: 1180px; width: 100%; }
+
+.view__head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--s-4); flex-wrap: wrap; margin-bottom: var(--s-2);
+}
+.view__title { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; }
+.view__sub { color: var(--ink-500); font-size: var(--fs-sm); margin-top: 2px; }
+.view__rule { height: 1px; background: var(--line); margin: var(--s-4) 0 var(--s-5); }
+
+.grid-cards { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.grid-stats { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.grid-2 { display: grid; gap: var(--s-5); grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; }
+
+@media (max-width: 1040px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* --- Responsive: el menu se colapsa a partir de 768px --------------- */
+@media (max-width: 768px) {
+  .shell { grid-template-columns: 1fr; }
+  .topbar { display: flex; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 50;
+    width: 260px; height: 100vh;
+    transform: translateX(-100%);
+    transition: transform .2s var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  .shell[data-menu="open"] .sidebar { transform: translateX(0); }
+  .sidebar__toggle {
+    display: grid; place-items: center;
+    width: 32px; height: 32px; margin-left: auto;
+    background: none; border: 0; color: rgba(255,255,255,.7); cursor: pointer;
+  }
+  .scrim {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(20,18,28,.5);
+  }
+  .view { padding: var(--s-4) var(--s-4) var(--s-8); }
+}
+
+@media (max-width: 420px) {
+  .view { padding: var(--s-3) var(--s-3) var(--s-7); }
+}

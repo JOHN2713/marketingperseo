@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MKT Process</title>
+<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js" defer></script>
+</head>
+<body>
+
+<div class="shell" id="shell" data-menu="closed" hidden>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <img src="assets/img/logo.svg" alt="">
+      <span>MKT Process</span>
+    </div>
+
+    <nav class="sidebar__nav" aria-label="Secciones">
+      <a class="navlink" href="#/"><span class="navlink__dot"></span>Inicio</a>
+      <a class="navlink" href="#/procesos">
+        <span class="navlink__dot"></span>Procesos
+        <span class="navlink__count hidden" id="badge-overdue" title="Pasos vencidos"></span>
+      </a>
+
+      <div class="sidebar__section admin-only hidden">Admin</div>
+      <a class="navlink admin-only hidden" href="#/plantillas"><span class="navlink__dot"></span>Plantillas</a>
+      <a class="navlink admin-only hidden" href="#/usuarios"><span class="navlink__dot"></span>Usuarios</a>
+    </nav>
+
+    <div class="sidebar__foot">
+      <div class="sidebar__user">
+        <b id="user-name">&nbsp;</b>
+        <small id="user-role">&nbsp;</small>
+      </div>
+      <a class="navlink" href="#" id="btn-logout"><span class="navlink__dot"></span>Salir</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <img src="assets/img/logo.svg" alt="" width="24" height="24">
+      <span class="bold sm">MKT Process</span>
+      <button class="sidebar__toggle" id="btn-menu" aria-label="Abrir men&uacute;" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script type="module" src="assets/js/app.js"></script>
+
+</body>
+</html>

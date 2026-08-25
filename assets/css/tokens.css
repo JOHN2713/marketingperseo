@@ -1,0 +1,69 @@
+/* =====================================================================
+   MKT Process · Tokens
+   Fuente unica de color, tipografia, espaciado y sombra.
+   Ver docs/04-diseno-interfaz.md
+   ===================================================================== */
+:root {
+  /* Superficies */
+  --ink-900:  #14121C;   /* menu lateral, titulos */
+  --ink-700:  #33303F;
+  --ink-500:  #5B5766;   /* texto secundario */
+  --ink-300:  #8E8A9B;   /* texto terciario, placeholders */
+  --paper:    #F1F0F4;   /* fondo de la app */
+  --surface:  #FFFFFF;   /* tarjetas, filas */
+  --line:     #DEDCE5;   /* bordes de un pixel */
+
+  /* Accion */
+  --accent:       #5B21B6;
+  --accent-hover: #4C1D95;
+  --accent-soft:  #EDE7FB;
+  --focus:        #7C3AED;
+
+  /* Estado del paso */
+  --st-pendiente:  #9993A5;
+  --st-en-curso:   #2563C9;
+  --st-bloqueado:  #C2413A;
+  --st-completado: #2F855A;
+  --st-omitido:    #C6C2CE;
+
+  /* Prioridad */
+  --pr-baja:    #8E8A9B;
+  --pr-media:   #2563C9;
+  --pr-alta:    #D97706;
+  --pr-urgente: #C2413A;
+
+  /* Estado del proceso */
+  --ps-planificado: #5B5766;
+  --ps-en-curso:    #2563C9;
+  --ps-pausado:     #D97706;
+  --ps-completado:  #2F855A;
+  --ps-cancelado:   #9993A5;
+
+  /* Tipografia */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-data:    'JetBrains Mono', ui-monospace, monospace;
+
+  --fs-xs:   0.75rem;    /* etiquetas, metadatos */
+  --fs-sm:   0.8125rem;  /* datos en tabla */
+  --fs-base: 0.9375rem;  /* cuerpo */
+  --fs-lg:   1.125rem;
+  --fs-xl:   1.5rem;
+  --fs-2xl:  2.25rem;    /* el porcentaje grande */
+
+  /* Espaciado — escala de 4 */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+
+  --radius:    6px;
+  --radius-lg: 10px;
+
+  --shadow-sm: 0 1px 2px rgba(20,18,28,.06);
+  --shadow-md: 0 4px 16px rgba(20,18,28,.10);
+  --shadow-lg: 0 12px 40px rgba(20,18,28,.18);
+
+  --sidebar-w: 240px;
+  --header-h:  60px;
+
+  --ease: cubic-bezier(.2, .7, .3, 1);
+}

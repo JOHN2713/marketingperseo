@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MKT Process</title>
+<meta name="description" content="Procesos de marketing que no se olvidan.">
+<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+
+<main class="auth">
+  <div class="auth__box">
+
+    <div class="auth__brand">
+      <img class="auth__logo" src="assets/img/logo.svg" alt="">
+      <div class="auth__name">MKT Process</div>
+      <div class="auth__rule"></div>
+      <p class="auth__tag">Procesos de marketing<br>que no se olvidan</p>
+    </div>
+
+    <div class="auth__card">
+
+      <!-- ENTRAR -->
+      <form id="form-login" class="stack" novalidate>
+        <div class="field">
+          <label for="login-email">Correo</label>
+          <input class="input" id="login-email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="login-pass">Contrase&ntilde;a</label>
+          <input class="input" id="login-pass" type="password" autocomplete="current-password" required>
+        </div>
+        <p class="error-text" id="login-error" role="alert"></p>
+        <button class="btn btn--primary btn--block" type="submit">Entrar</button>
+      </form>
+
+      <!-- CREAR CUENTA -->
+      <form id="form-signup" class="stack hidden" novalidate>
+        <div class="field">
+          <label for="signup-name">Nombre completo</label>
+          <input class="input" id="signup-name" type="text" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="signup-email">Correo</label>
+          <input class="input" id="signup-email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="signup-pass">Contrase&ntilde;a</label>
+          <input class="input" id="signup-pass" type="password" autocomplete="new-password" minlength="8" required>
+          <span class="xs dim">M&iacute;nimo 8 caracteres.</span>
+        </div>
+        <p class="error-text" id="signup-error" role="alert"></p>
+        <button class="btn btn--primary btn--block" type="submit">Crear cuenta</button>
+      </form>
+
+      <!-- RECUPERAR -->
+      <form id="form-reset" class="stack hidden" novalidate>
+        <p class="modal__text">Te enviamos un enlace para elegir una contrase&ntilde;a nueva.</p>
+        <div class="field">
+          <label for="reset-email">Correo</label>
+          <input class="input" id="reset-email" type="email" autocomplete="email" required>
+        </div>
+        <p class="error-text" id="reset-error" role="alert"></p>
+        <button class="btn btn--primary btn--block" type="submit">Enviar enlace</button>
+      </form>
+
+      <!-- ELEGIR CONTRASE&Ntilde;A NUEVA (se muestra al volver del correo) -->
+      <form id="form-newpass" class="stack hidden" novalidate>
+        <p class="modal__text">Elige tu contrase&ntilde;a nueva.</p>
+        <div class="field">
+          <label for="newpass-pass">Contrase&ntilde;a nueva</label>
+          <input class="input" id="newpass-pass" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+        <p class="error-text" id="newpass-error" role="alert"></p>
+        <button class="btn btn--primary btn--block" type="submit">Guardar contrase&ntilde;a</button>
+      </form>
+
+    </div>
+
+    <nav class="auth__links" id="auth-links">
+      <button type="button" data-go="signup">Crear cuenta</button>
+      <span class="dim">&middot;</span>
+      <button type="button" data-go="reset">Olvid&eacute; mi contrase&ntilde;a</button>
+    </nav>
+
+  </div>
+</main>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script type="module">
+import { signIn, signUp, sendResetEmail, setNewPassword, getSession, isRecoveryFlow } from './assets/js/auth.js';
+import { toast, traducir } from './assets/js/ui.js';
+
+const forms = {
+  login:   document.getElementById('form-login'),
+  signup:  document.getElementById('form-signup'),
+  reset:   document.getElementById('form-reset'),
+  newpass: document.getElementById('form-newpass'),
+};
+const links = document.getElementById('auth-links');
+
+const LINKS = {
+  login:   '<button type="button" data-go="signup">Crear cuenta</button><span class="dim">&middot;</span><button type="button" data-go="reset">Olvid&eacute; mi contrase&ntilde;a</button>',
+  signup:  '<button type="button" data-go="login">Ya tengo cuenta</button>',
+  reset:   '<button type="button" data-go="login">Volver a entrar</button>',
+  newpass: '',
+};
+
+function show(name) {
+  for (const [key, el] of Object.entries(forms)) el.classList.toggle('hidden', key !== name);
+  links.innerHTML = LINKS[name];
+  const first = forms[name].querySelector('input');
+  if (first) first.focus();
+}
+
+links.addEventListener('click', e => {
+  const btn = e.target.closest('[data-go]');
+  if (btn) show(btn.dataset.go);
+});
+
+function busy(form, on, label) {
+  const btn = form.querySelector('button[type="submit"]');
+  btn.disabled = on;
+  btn.textContent = on ? 'Un momento...' : label;
+}
+
+// El enlace del correo de recuperacion abre index.html con una sesion temporal.
+// Si estamos en ese flujo, no redirigimos: mostramos el formulario de contrasena nueva.
+const recovery = isRecoveryFlow();
+
+if (recovery) {
+  show('newpass');
+} else {
+  const { data } = await getSession();
+  if (data.session) location.replace('app.html');
+}
+
+forms.login.addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('login-error');
+  err.textContent = '';
+  busy(forms.login, true, 'Entrar');
+  const { error } = await signIn(
+    document.getElementById('login-email').value.trim(),
+    document.getElementById('login-pass').value
+  );
+  busy(forms.login, false, 'Entrar');
+  if (error) { err.textContent = traducir(error); return; }
+  location.replace('app.html');
+});
+
+forms.signup.addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('signup-error');
+  err.textContent = '';
+  const pass = document.getElementById('signup-pass').value;
+  if (pass.length < 8) { err.textContent = 'La contraseña necesita al menos 8 caracteres.'; return; }
+
+  busy(forms.signup, true, 'Crear cuenta');
+  const { data, error } = await signUp(
+    document.getElementById('signup-email').value.trim(),
+    pass,
+    document.getElementById('signup-name').value.trim()
+  );
+  busy(forms.signup, false, 'Crear cuenta');
+  if (error) { err.textContent = traducir(error); return; }
+
+  // Con "Confirm email" activado no hay sesion todavia: hay que revisar el correo.
+  if (data.session) { location.replace('app.html'); return; }
+  toast.success('Cuenta creada. Revisa tu correo para confirmarla y luego entra.');
+  show('login');
+});
+
+forms.reset.addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('reset-error');
+  err.textContent = '';
+  busy(forms.reset, true, 'Enviar enlace');
+  const { error } = await sendResetEmail(document.getElementById('reset-email').value.trim());
+  busy(forms.reset, false, 'Enviar enlace');
+  if (error) { err.textContent = traducir(error); return; }
+  toast.success('Enlace enviado. Revisa tu correo.');
+  show('login');
+});
+
+forms.newpass.addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('newpass-error');
+  err.textContent = '';
+  const pass = document.getElementById('newpass-pass').value;
+  if (pass.length < 8) { err.textContent = 'La contraseña necesita al menos 8 caracteres.'; return; }
+
+  busy(forms.newpass, true, 'Guardar contraseña');
+  const { error } = await setNewPassword(pass);
+  busy(forms.newpass, false, 'Guardar contraseña');
+  if (error) { err.textContent = traducir(error); return; }
+  location.replace('app.html');
+});
+</script>
+
+</body>
+</html>
