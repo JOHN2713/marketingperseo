@@ -44,8 +44,8 @@ Las cinco tablas deben decir `true`. Si alguna dice `false`, la app quedaría ab
 
 | Campo | Valor |
 |---|---|
-| Site URL | `https://mkt-process.vercel.app` |
-| Redirect URLs | `http://localhost:3000/**` y `https://mkt-process.vercel.app/**` |
+| Site URL | `https://marketingperseo.vercel.app` |
+| Redirect URLs | `http://localhost:3000/**` y `https://marketingperseo.vercel.app/**` |
 
 Sin esto, el enlace de recuperación de contraseña rebota.
 
@@ -130,7 +130,7 @@ git init
 git add .
 git commit -m "Estructura inicial y documentación"
 git branch -M main
-git remote add origin https://github.com/TU-USUARIO/mkt-process.git
+git remote add origin https://github.com/JOHN2713/marketingperseo.git
 git push -u origin main
 ```
 
@@ -212,7 +212,7 @@ Con `SUPABASE_URL` y `SUPABASE_ANON_KEY` en **Settings → Environment Variables
 **Respaldos.** Supabase hace respaldo diario en el plan gratuito, con 7 días de retención. Para algo más largo, exporta manualmente:
 
 ```bash
-pg_dump "postgresql://postgres:CONTRASEÑA@db.TU-PROYECTO.supabase.co:5432/postgres" \
+pg_dump "postgresql://postgres:CONTRASEÑA@db.ivngjgoxhqywclwmozml.supabase.co:5432/postgres" \
   --schema=public --data-only > respaldo-$(date +%F).sql
 ```
 

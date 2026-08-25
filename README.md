@@ -1,5 +1,7 @@
 # MKT Process
 
+**En producción: [marketingperseo.vercel.app](https://marketingperseo.vercel.app)**
+
 Aplicativo web para ejecutar procesos de marketing como checklists vivos. El primer proceso es **Masterclass**, pero el sistema está diseñado para que se agreguen otros (Lanzamiento, Webinar, Campaña de Ads) sin tocar código.
 
 ---
@@ -60,8 +62,8 @@ Los scripts SQL listos para pegar en Supabase están en [`supabase/`](supabase/)
 ## Arranque rápido
 
 ```bash
-git clone https://github.com/TU-USUARIO/mkt-process.git
-cd mkt-process
+git clone https://github.com/JOHN2713/marketingperseo.git
+cd marketingperseo
 # Abre assets/js/config.js y pega tu Project URL y tu anon key
 npx serve .                                          # http://localhost:3000
 ```
