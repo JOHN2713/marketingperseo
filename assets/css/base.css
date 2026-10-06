@@ -102,6 +102,23 @@ h3 { font-size: var(--fs-base); }
 
 input[type="date"], input[type="datetime-local"] { font-family: var(--font-data); font-size: var(--fs-sm); }
 
+/* Contrasena con visor */
+.input-pass { position: relative; }
+.input-pass .input { padding-right: 44px; }
+.input-pass__toggle {
+  position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+  width: 32px; height: 30px;
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: var(--radius);
+  color: var(--ink-300); cursor: pointer;
+}
+.input-pass__toggle:hover { color: var(--ink-700); background: rgba(20,18,28,.05); }
+.input-pass__toggle .eye-closed { display: none; }
+.input-pass__toggle[aria-pressed="true"] .eye-open { display: none; }
+.input-pass__toggle[aria-pressed="true"] .eye-closed { display: block; }
+/* Edge y algunos Chromium dibujan su propio ojo: quedaria duplicado. */
+.input-pass input::-ms-reveal, .input-pass input::-ms-clear { display: none; }
+
 .error-text { color: var(--pr-urgente); font-size: var(--fs-xs); min-height: 1em; }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,117 @@
+/* =====================================================================
+   tasks.service.js
+   Tareas, sus responsables, sus recursos y el catalogo de tipos.
+   ===================================================================== */
+import { supabase } from '../supabase.js';
+import { state, isJefe } from '../store.js';
+
+export const ESTADOS = ['pendiente', 'en_curso', 'en_revision', 'completado', 'bloqueado'];
+export const PRIORIDADES = ['urgente', 'alta', 'media', 'baja'];
+
+const CAMPOS = `
+  id, title, type_id, priority, status, due_date, started_at, finished_at,
+  observations, created_by, created_at, updated_at,
+  assignees:task_assignees ( profile_id ),
+  resources:task_resources ( id, label, url, sort_order )
+`;
+
+/** Aplana el embed de responsables a un array de ids. */
+function normalizar(t) {
+  return {
+    ...t,
+    assignees: (t.assignees || []).map(a => a.profile_id),
+    resources: [...(t.resources || [])].sort((a, b) => a.sort_order - b.sort_order),
+  };
+}
+
+/**
+ * Lista de tareas. `from` / `to` son fechas 'YYYY-MM-DD' locales y filtran
+ * por fecha de creacion (dia de asignacion), ambos extremos incluidos.
+ */
+export async function list({ from = null, to = null } = {}) {
+  let q = supabase.from('tasks').select(CAMPOS).order('created_at', { ascending: false });
+  if (from) q = q.gte('created_at', new Date(`${from}T00:00:00`).toISOString());
+  if (to) {
+    const fin = new Date(`${to}T00:00:00`);
+    fin.setDate(fin.getDate() + 1);
+    q = q.lt('created_at', fin.toISOString());
+  }
+  const { data, error } = await q;
+  if (error) return { data: null, error };
+  return { data: data.map(normalizar), error: null };
+}
+
+export async function getById(id) {
+  const { data, error } = await supabase.from('tasks').select(CAMPOS).eq('id', id).single();
+  return error ? { data: null, error } : { data: normalizar(data), error: null };
+}
+
+/**
+ * Crea o actualiza la tarea con responsables y recursos en una transaccion.
+ * `assignees` / `resources` en null = no tocarlos.
+ */
+export async function save(id, data, { assignees = null, resources = null } = {}) {
+  return supabase.rpc('save_task', {
+    p_id: id || null,
+    p_data: data,
+    p_assignees: assignees,
+    p_resources: resources,
+  });
+}
+
+/** Cambio de estado desde el Kanban. El trigger pone las horas. */
+export async function setStatus(id, status) {
+  const { data, error } = await supabase
+    .from('tasks').update({ status }).eq('id', id).select(CAMPOS);
+  if (error) return { data: null, error };
+  // RLS no da error al bloquear un update: simplemente no toca la fila.
+  if (!data.length) return { data: null, error: { code: '42501' } };
+  return { data: normalizar(data[0]), error: null };
+}
+
+export async function remove(id) {
+  return supabase.from('tasks').delete().eq('id', id);
+}
+
+/** Quien puede editar: jefe/admin, quien la creo o un responsable. */
+export function canEdit(task) {
+  if (!task) return true;                       // tarea nueva
+  const yo = state.user?.id;
+  return isJefe() || task.created_by === yo || task.assignees.includes(yo);
+}
+
+export function canDelete(task) {
+  return isJefe() || task.created_by === state.user?.id;
+}
+
+/** Horas entre inicio y fin; null si falta alguna. */
+export function hours(task) {
+  if (!task.started_at || !task.finished_at) return null;
+  return (new Date(task.finished_at) - new Date(task.started_at)) / 3600000;
+}
+
+/* --- Tipos de tarea ---------------------------------------------------- */
+
+export async function listTypes() {
+  return supabase.from('task_types')
+    .select('id, name, sort_order, is_active')
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true });
+}
+
+export async function refreshTypes() {
+  const { data, error } = await listTypes();
+  if (!error) state.taskTypes = data;
+  return { data, error };
+}
+
+export async function createType(name) {
+  const orden = Math.max(0, ...state.taskTypes.map(t => t.sort_order)) + 1;
+  return supabase.from('task_types').insert({ name, sort_order: orden }).select().single();
+}
+
+export async function updateType(id, patch) {
+  return supabase.from('task_types').update(patch).eq('id', id).select().single();
+}
+
+export const typeName = id => state.taskTypes.find(t => t.id === id)?.name || null;

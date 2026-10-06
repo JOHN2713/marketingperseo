@@ -129,6 +129,13 @@ const MENSAJES = [
   [/failed to fetch|networkerror/i,     'Sin conexión con el servidor. Revisa tu internet y reintenta.'],
   [/process_steps_date_range/i,         'La fecha de fin no puede ser anterior a la de inicio.'],
   [/administrador puede cambiar el rol/i, 'Solo un administrador puede cambiar el rol de un usuario.'],
+  [/tasks_time_range/i,                 'La hora de fin no puede ser anterior a la de inicio.'],
+  [/jefe de área puede/i,               'Solo el jefe de área puede asignar o quitar a otras personas.'],
+  [/solo se permiten correos/i,         'Solo se pueden registrar correos del dominio de la empresa.'],
+  // GoTrue envuelve cualquier excepcion de un trigger de auth.users en este
+  // mensaje generico; el unico trigger que rechaza registros es el de dominio.
+  [/database error saving new user/i,   'No se pudo crear la cuenta. Usa tu correo de la empresa.'],
+  [/task_resources_url_check/i,         'Algún link no es válido. Debe empezar con http:// o https://'],
 ];
 
 export function traducir(error) {
@@ -184,13 +191,13 @@ export const toast = {
  * Abre un modal. `body` es HTML. `actions` define los botones del pie.
  * Devuelve { el, close } — `el` es el nodo del modal, para leer sus campos.
  */
-export function openModal({ title, body = '', actions = [], onOpen, onClose }) {
+export function openModal({ title, body = '', actions = [], onOpen, onClose, wide = false }) {
   const previousFocus = document.activeElement;
 
   const scrim = document.createElement('div');
   scrim.className = 'modal-scrim';
   scrim.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="modal${wide ? ' modal--wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
       <div class="modal__head"><h2 class="modal__title">${esc(title)}</h2></div>
       <div class="modal__body">${body}</div>
       <div class="modal__foot"></div>
@@ -314,10 +321,64 @@ export function saveState(el, state) {
 
 export const ETIQUETA = {
   pendiente: 'Pendiente', en_curso: 'En curso', bloqueado: 'Bloqueado',
-  completado: 'Completado', omitido: 'Omitido',
+  completado: 'Completado', omitido: 'Omitido', en_revision: 'En revisión',
   planificado: 'Planificado', pausado: 'Pausado', cancelado: 'Cancelado',
   baja: 'Baja', media: 'Media', alta: 'Alta', urgente: 'Urgente',
 };
+
+export const ROL = { admin: 'Administrador', jefe: 'Jefe de área', user: 'Usuario' };
+
+/**
+ * Muestra u oculta lo que depende del rol: `.admin-only` solo para admin,
+ * `.jefe-only` para jefe y admin.
+ */
+export function applyRoleUI(role) {
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', role !== 'admin'));
+  document.querySelectorAll('.jefe-only').forEach(el => el.classList.toggle('hidden', role !== 'admin' && role !== 'jefe'));
+  const label = document.getElementById('user-role');
+  if (label) label.textContent = ROL[role] || 'Usuario';
+}
+
+/** Duracion entre dos timestamps: "3 h 20 min", "2 d 4 h". Nulo si falta uno. */
+export function fmtDuration(fromTs, toTs) {
+  if (!fromTs || !toTs) return null;
+  return fmtHours((new Date(toTs) - new Date(fromTs)) / 3600000);
+}
+
+export function fmtHours(hours) {
+  if (hours === null || hours === undefined || isNaN(hours) || hours < 0) return '—';
+  const min = Math.round(hours * 60);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h < 24) return m ? `${h} h ${m} min` : `${h} h`;
+  const d = Math.floor(h / 24), rh = h % 24;
+  return rh ? `${d} d ${rh} h` : `${d} d`;
+}
+
+/** Iniciales para el avatar de un responsable. */
+export function initials(name) {
+  const parts = String(name || '?').replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean);
+  return ((parts[0]?.[0] || '?') + (parts[1]?.[0] || '')).toUpperCase();
+}
+
+/* Tooltip flotante para graficas: cualquier elemento con data-tip. */
+let tipEl = null;
+export function enableTips(root) {
+  const mover = e => {
+    const t = e.target.closest('[data-tip]');
+    if (!t || !root.contains(t)) { tipEl?.remove(); tipEl = null; return; }
+    if (!tipEl) { tipEl = document.createElement('div'); tipEl.className = 'tip'; document.body.appendChild(tipEl); }
+    tipEl.innerHTML = t.dataset.tip;   // ya viene escapado al construirlo
+    const x = Math.min(e.clientX + 14, window.innerWidth - tipEl.offsetWidth - 8);
+    const y = Math.max(8, e.clientY - tipEl.offsetHeight - 12);
+    tipEl.style.left = `${x}px`;
+    tipEl.style.top = `${y}px`;
+  };
+  const salir = () => { tipEl?.remove(); tipEl = null; };
+  root.addEventListener('pointermove', mover);
+  root.addEventListener('pointerleave', salir);
+  return () => { root.removeEventListener('pointermove', mover); root.removeEventListener('pointerleave', salir); salir(); };
+}
 
 export function pill(value) {
   if (!value) return '';

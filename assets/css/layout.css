@@ -153,3 +153,12 @@
 @media (max-width: 420px) {
   .view { padding: var(--s-3) var(--s-3) var(--s-7); }
 }
+
+/* --- Impresion del informe de metricas ------------------------------ */
+@media print {
+  .sidebar, .topbar, .toolbar, .toasts, #btn-print, .seg { display: none !important; }
+  .shell { display: block; }
+  body, .view { background: #fff; padding: 0; max-width: none; }
+  .card { box-shadow: none; break-inside: avoid; }
+  .hbar__seg, .cols__bar, .st-key { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

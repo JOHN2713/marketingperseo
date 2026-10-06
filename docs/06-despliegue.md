@@ -19,6 +19,7 @@ En **SQL Editor**, en este orden y uno por uno:
 2. supabase/functions.sql
 3. supabase/policies.sql
 4. supabase/seed-masterclass.sql
+5. supabase/tasks.sql
 ```
 
 Verificar que RLS quedó activo:
@@ -30,7 +31,7 @@ select tablename, rowsecurity
  order by tablename;
 ```
 
-Las cinco tablas deben decir `true`. Si alguna dice `false`, la app quedaría abierta a cualquiera con la `anon key`, que es pública.
+Todas las tablas deben decir `true`. Si alguna dice `false`, la app quedaría abierta a cualquiera con la `anon key`, que es pública.
 
 ### Configurar Auth
 
@@ -39,6 +40,11 @@ Las cinco tablas deben decir `true`. Si alguna dice `false`, la app quedaría ab
 - Enable email provider: activado
 - Confirm email: desactivado en desarrollo, activado en producción
 - Minimum password length: 8
+
+**Authentication → Sessions**
+
+- Access token (JWT) expiry: `3600` segundos
+- Inactivity timeout: `1 hour` (solo en plan Pro; la app ya cierra por inactividad del lado del navegador, ver doc 09)
 
 **Authentication → URL Configuration**
 

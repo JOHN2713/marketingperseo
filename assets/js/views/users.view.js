@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state } from '../store.js';
 import * as usersService from '../services/users.service.js';
-import { esc, empty, skeleton, fmtDate, toast, traducir, confirmAction } from '../ui.js';
+import { esc, empty, skeleton, fmtDate, toast, traducir, confirmAction, applyRoleUI, ROL } from '../ui.js';
 
 let perfiles = [];
 
@@ -13,7 +13,8 @@ export async function render(root) {
     <div class="view__head">
       <div>
         <h1 class="view__title">Usuarios</h1>
-        <p class="view__sub">La gente se registra sola desde la pantalla de acceso. Aquí solo se cambian roles.</p>
+        <p class="view__sub">El equipo se registra solo con su correo de la empresa. Aquí se cambian roles:
+          el <b>jefe de área</b> asigna tareas a otros y ve las métricas; el <b>administrador</b> además gestiona plantillas y usuarios.</p>
       </div>
     </div>
     <div class="view__rule"></div>
@@ -73,8 +74,8 @@ function filaHtml(p) {
     <td>
       <select class="select" data-role-select data-id="${esc(p.id)}" data-antes="${esc(p.role)}"
               aria-label="Rol de ${esc(p.full_name || p.email)}">
-        <option value="user"${p.role === 'user' ? ' selected' : ''}>Usuario</option>
-        <option value="admin"${p.role === 'admin' ? ' selected' : ''}>Administrador</option>
+        ${['user', 'jefe', 'admin'].map(r =>
+          `<option value="${r}"${p.role === r ? ' selected' : ''}>${ROL[r]}</option>`).join('')}
       </select>
     </td>
   </tr>`;
@@ -91,7 +92,7 @@ async function cambiarRol(sel, root) {
 
   // Sin administrador nadie puede editar plantillas ni roles, y recuperarlo
   // exige volver al SQL Editor de Supabase. Se bloquea antes de guardar.
-  if (antes === 'admin' && nuevo === 'user') {
+  if (antes === 'admin' && nuevo !== 'admin') {
     const { count, error } = await usersService.adminCount();
     if (error) { toast.error(traducir(error)); return restaurar(); }
     if (count <= 1) {
@@ -112,13 +113,12 @@ async function cambiarRol(sel, root) {
   const { error } = await usersService.updateRole(id, nuevo);
   if (error) { toast.error(traducir(error)); return restaurar(); }
 
-  toast.success(nuevo === 'admin' ? 'Ahora es administrador' : 'Ahora es usuario');
+  toast.success(`Ahora es ${ROL[nuevo].toLowerCase()}`);
   await recargar(root);
 
   // Si me quite el rol a mi mismo, el menu tiene que reflejarlo sin recargar.
   if (id === state.user.id) {
     state.profile.role = nuevo;
-    document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', nuevo !== 'admin'));
-    document.getElementById('user-role').textContent = nuevo === 'admin' ? 'Administrador' : 'Usuario';
+    applyRoleUI(nuevo);
   }
 }

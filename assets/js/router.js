@@ -3,17 +3,22 @@
    El chequeo de rol aqui es de conveniencia: evita pantallas rotas.
    La seguridad real la aplica RLS en Postgres.
    ===================================================================== */
-import { isAdmin } from './store.js';
+import { isAdmin, isJefe } from './store.js';
 import { skeleton, empty } from './ui.js';
 
+// need: quien puede entrar. Sin `need`, cualquiera con sesion.
 const routes = [
-  { path: /^#\/$/,                 view: 'dashboard',       admin: false },
-  { path: /^#\/procesos$/,         view: 'processes',       admin: false },
-  { path: /^#\/procesos\/(.+)$/,   view: 'process-detail',  admin: false },
-  { path: /^#\/plantillas$/,       view: 'templates',       admin: true  },
-  { path: /^#\/plantillas\/(.+)$/, view: 'template-detail', admin: true  },
-  { path: /^#\/usuarios$/,         view: 'users',           admin: true  },
+  { path: /^#\/$/,                 view: 'dashboard'                         },
+  { path: /^#\/procesos$/,         view: 'processes'                         },
+  { path: /^#\/procesos\/(.+)$/,   view: 'process-detail'                    },
+  { path: /^#\/tareas$/,           view: 'tasks'                             },
+  { path: /^#\/metricas$/,         view: 'metrics',         need: 'jefe'     },
+  { path: /^#\/plantillas$/,       view: 'templates',       need: 'admin'    },
+  { path: /^#\/plantillas\/(.+)$/, view: 'template-detail', need: 'admin'    },
+  { path: /^#\/usuarios$/,         view: 'users',           need: 'admin'    },
 ];
+
+const PERMITE = { admin: isAdmin, jefe: isJefe };
 
 let current = null;   // modulo de la vista montada, para poder desmontarla
 
@@ -62,9 +67,10 @@ async function render() {
     return;
   }
 
-  if (found.route.admin && !isAdmin()) {
+  if (found.route.need && !PERMITE[found.route.need]()) {
+    const jefe = found.route.need === 'jefe';
     root.innerHTML = empty({
-      title: 'Sección solo para administradores',
+      title: jefe ? 'Sección solo para el jefe de área' : 'Sección solo para administradores',
       text: 'Pide a un administrador que te dé ese permiso desde Usuarios.',
       actionHtml: '<a class="btn btn--primary" href="#/">Ir al inicio</a>',
     });

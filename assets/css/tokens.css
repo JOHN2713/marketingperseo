@@ -25,6 +25,7 @@
   --st-bloqueado:  #C2413A;
   --st-completado: #2F855A;
   --st-omitido:    #C6C2CE;
+  --st-en-revision: #C27C0E;   /* solo tareas; validado junto a los otros cuatro */
 
   /* Prioridad */
   --pr-baja:    #8E8A9B;

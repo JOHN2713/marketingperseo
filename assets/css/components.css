@@ -357,3 +357,120 @@ a.card:hover, .card--link:hover { border-color: var(--accent); box-shadow: var(-
 .table td { padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
 .table tr:last-child td { border-bottom: 0; }
 .table__scroll { overflow-x: auto; }
+
+/* =====================================================================
+   Tareas, Kanban y Metricas
+   ===================================================================== */
+.pill--en_revision { color: #9A620B; background: rgba(194,124,14,.14); }
+
+.modal--wide { max-width: 720px; }
+
+/* Selector Lista / Kanban */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.seg button {
+  min-height: 34px; padding: 0 var(--s-3);
+  background: none; border: 0; font-size: var(--fs-sm); color: var(--ink-500); cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+
+/* Lista de tareas */
+.tlist__row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 90px 160px 90px 110px 100px 90px;
+  align-items: center; gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 0; border-bottom: 1px solid var(--line);
+  background: none; width: 100%; text-align: left; color: inherit; cursor: pointer;
+}
+.tlist__row:last-child { border-bottom: 0; }
+.tlist__row:hover { background: var(--accent-soft); }
+.tlist__head { cursor: default; font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-500); }
+.tlist__head:hover { background: none; }
+@media (max-width: 1000px) {
+  .tlist__row { grid-template-columns: minmax(0,1fr) auto auto; }
+  .tlist__row > .tlist__hide { display: none; }
+}
+
+.who { display: inline-flex; }
+.avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: inline-grid; place-items: center;
+  background: var(--ink-700); color: #fff;
+  font-size: 10px; font-weight: 600; letter-spacing: .02em;
+  border: 2px solid var(--surface);
+}
+.who .avatar + .avatar { margin-left: -6px; }
+
+/* Kanban */
+.kanban {
+  display: grid; gap: var(--s-3);
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
+  overflow-x: auto; padding-bottom: var(--s-2);
+}
+.kanban__col { background: rgba(20,18,28,.035); border-radius: var(--radius-lg); display: flex; flex-direction: column; min-height: 240px; }
+.kanban__head {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-3) var(--s-3) var(--s-2);
+  font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-700);
+}
+.kanban__head .data { margin-left: auto; color: var(--ink-500); }
+.kanban__list { flex: 1; display: flex; flex-direction: column; gap: var(--s-2); padding: 0 var(--s-2) var(--s-3); min-height: 60px; }
+.kcard {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: var(--s-3); box-shadow: var(--shadow-sm); cursor: grab;
+  display: grid; gap: var(--s-2);
+}
+.kcard:hover { border-color: var(--ink-300); }
+.kcard--locked { cursor: pointer; }
+.kcard__title { font-weight: 500; font-size: var(--fs-sm); line-height: 1.35; }
+.kcard--ghost { opacity: .4; background: var(--accent-soft); }
+.kcard--drag { transform: rotate(1.5deg); box-shadow: var(--shadow-md); }
+@media (prefers-reduced-motion: reduce) { .kcard--drag { transform: none; } }
+
+.st-key { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: 0 0 auto; }
+
+/* Formulario de tarea */
+.form-grid { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.checklist { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.checklist label {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border: 1px solid var(--line); border-radius: 15px;
+  font-size: var(--fs-sm); cursor: pointer;
+}
+.checklist label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.checklist label:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.res-row { display: grid; grid-template-columns: 140px minmax(0,1fr) auto; gap: var(--s-2); align-items: center; }
+@media (max-width: 520px) { .res-row { grid-template-columns: 1fr auto; } .res-row .res-label { grid-column: 1 / -1; } }
+.duration { font-family: var(--font-data); font-size: var(--fs-sm); color: var(--ink-700); }
+
+/* --- Graficas (metricas) ---------------------------------------------- */
+.chart { padding: var(--s-4); display: grid; gap: var(--s-3); }
+.chart__legend { display: flex; flex-wrap: wrap; gap: var(--s-3); font-size: var(--fs-xs); color: var(--ink-500); }
+.chart__legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+.hbar { display: grid; grid-template-columns: 150px minmax(0,1fr) 84px; align-items: center; gap: var(--s-3); font-size: var(--fs-sm); }
+.hbar__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-700); }
+.hbar__track { height: 14px; display: flex; gap: 2px; }
+.hbar__seg { height: 100%; min-width: 2px; }
+.hbar__seg:first-child { border-radius: 4px 0 0 4px; }
+.hbar__seg:last-child  { border-radius: 0 4px 4px 0; }
+.hbar__seg:only-child  { border-radius: 0 4px 4px 0; }
+.hbar__seg:hover { filter: brightness(1.12); }
+.hbar__value { font-family: var(--font-data); font-size: var(--fs-xs); color: var(--ink-500); text-align: right; white-space: nowrap; }
+@media (max-width: 560px) { .hbar { grid-template-columns: 90px minmax(0,1fr) 64px; } }
+
+.cols { display: flex; align-items: flex-end; gap: 4px; height: 180px; border-bottom: 1px solid var(--line); padding-top: var(--s-4); }
+.cols__col { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+.cols__bar { width: 100%; max-width: 36px; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 0; }
+.cols__col:hover .cols__bar { filter: brightness(1.15); }
+.cols__val { font-family: var(--font-data); font-size: 10px; color: var(--ink-500); margin-bottom: 2px; }
+.cols__axis { display: flex; gap: 4px; }
+.cols__axis span { flex: 1 1 0; min-width: 0; text-align: center; font-family: var(--font-data); font-size: 10px; color: var(--ink-300); overflow: hidden; white-space: nowrap; }
+
+.tip {
+  position: fixed; z-index: 300; pointer-events: none;
+  background: var(--ink-900); color: #fff; border-radius: var(--radius);
+  padding: 6px 10px; font-size: var(--fs-xs); line-height: 1.4; box-shadow: var(--shadow-md);
+  max-width: 260px;
+}

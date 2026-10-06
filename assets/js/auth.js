@@ -3,11 +3,21 @@
    ===================================================================== */
 import { supabase } from './supabase.js';
 import { state, reset } from './store.js';
+import { markActivity, clearActivity, isIdleExpired } from './session-guard.js';
+import { ALLOWED_EMAIL_DOMAIN } from './config.js';
 
 export const getSession = () => supabase.auth.getSession();
 
 export async function signIn(email, password) {
-  return supabase.auth.signInWithPassword({ email, password });
+  const res = await supabase.auth.signInWithPassword({ email, password });
+  if (!res.error) markActivity();
+  return res;
+}
+
+/** El trigger guard_email_domain lo aplica en la base; esto solo avisa antes. */
+export function isAllowedEmail(email) {
+  if (!ALLOWED_EMAIL_DOMAIN) return true;
+  return String(email).trim().toLowerCase().endsWith('@' + ALLOWED_EMAIL_DOMAIN.toLowerCase());
 }
 
 export async function signUp(email, password, fullName) {
@@ -20,8 +30,33 @@ export async function signUp(email, password, fullName) {
 
 export async function signOut() {
   const res = await supabase.auth.signOut();
+  clearActivity();
   reset();
   return res;
+}
+
+// Mientras expireSession cierra, watchSession no debe redirigir por su cuenta:
+// perderia el ?motivo= y el login no explicaria por que se cerro.
+let expirando = false;
+
+/** Cierre por inactividad: el login muestra por que se cerro. */
+export async function expireSession() {
+  expirando = true;
+  await supabase.auth.signOut();
+  clearActivity();
+  reset();
+  location.replace('index.html?motivo=inactividad');
+}
+
+/**
+ * Sesion guardada pero sin actividad en la ultima hora: el refresh token
+ * seguiria valido, pero no se reutiliza. Devuelve true si la cerro.
+ */
+export async function dropIdleSession() {
+  if (!isIdleExpired()) return false;
+  await supabase.auth.signOut();
+  clearActivity();
+  return true;
 }
 
 export async function sendResetEmail(email) {
@@ -31,7 +66,9 @@ export async function sendResetEmail(email) {
 }
 
 export async function setNewPassword(password) {
-  return supabase.auth.updateUser({ password });
+  const res = await supabase.auth.updateUser({ password });
+  if (!res.error) markActivity();
+  return res;
 }
 
 /**
@@ -50,6 +87,8 @@ export function isRecoveryFlow() {
  * Con sesion, deja en el store el usuario y su perfil (rol incluido).
  */
 export async function requireSession() {
+  if (await dropIdleSession()) { location.replace('index.html?motivo=inactividad'); return null; }
+
   const { data } = await supabase.auth.getSession();
   if (!data.session) { location.replace('index.html'); return null; }
 
@@ -77,7 +116,7 @@ export async function requireSession() {
 /** Si la sesion caduca o se cierra en otra pestana, se vuelve al login. */
 export function watchSession() {
   supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_OUT') {
+    if (event === 'SIGNED_OUT' && !expirando) {
       reset();
       location.replace('index.html');
     }

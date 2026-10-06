@@ -2,13 +2,15 @@
    app.js · Arranque de app.html
    Guardia de sesion, montaje del shell, carga del cache y router.
    ===================================================================== */
-import { requireSession, signOut, watchSession } from './auth.js';
-import { state, isAdmin, on } from './store.js';
+import { requireSession, signOut, watchSession, expireSession } from './auth.js';
+import { startIdleWatch } from './session-guard.js';
+import { state, on } from './store.js';
 import { start } from './router.js';
 import * as processesService from './services/processes.service.js';
 import * as usersService from './services/users.service.js';
 import * as templatesService from './services/templates.service.js';
-import { toast, traducir } from './ui.js';
+import * as tasksService from './services/tasks.service.js';
+import { toast, traducir, applyRoleUI } from './ui.js';
 
 const REFRESCO_MS = 5 * 60 * 1000;   // doc 03 F7: sin websockets en v1
 
@@ -19,13 +21,15 @@ const profile = await requireSession();
 if (!profile) throw new Error('sin sesión');   // requireSession ya redirigio
 watchSession();
 
+// 60 minutos sin actividad cierran la sesion, en esta y en las demas pestanas.
+startIdleWatch({
+  onWarn: () => toast.info('Tu sesión se cerrará en 5 minutos por inactividad. Mueve el mouse o pulsa una tecla para seguir.'),
+  onExpire: expireSession,
+});
+
 /* --- 2 · Shell -------------------------------------------------------- */
 document.getElementById('user-name').textContent = profile.full_name || profile.email;
-document.getElementById('user-role').textContent = isAdmin() ? 'Administrador' : 'Usuario';
-
-if (isAdmin()) {
-  document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-}
+applyRoleUI(profile.role);
 
 shell.hidden = false;
 
@@ -66,12 +70,14 @@ on('attention', () => {
 
 /* --- 4 · Cache ligero -------------------------------------------------- */
 async function cargarCache() {
-  const [perfiles, plantillas] = await Promise.all([
+  const [perfiles, plantillas, tipos] = await Promise.all([
     usersService.list(),
     templatesService.list({ onlyActive: true }),
+    tasksService.listTypes(),
   ]);
   if (perfiles.data)   state.profiles  = perfiles.data;
   if (plantillas.data) state.templates = plantillas.data;
+  if (tipos.data)      state.taskTypes = tipos.data;
 }
 
 await Promise.all([cargarCache(), processesService.refreshAttention()]);

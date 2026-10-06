@@ -9,11 +9,15 @@ export const state = {
   profile: null,        // public.profiles
   profiles: [],         // todo el equipo, para los selectores de responsable
   templates: [],        // plantillas activas
+  taskTypes: [],        // catalogo de tipos de tarea (activos e inactivos)
   overdue: 0,           // pasos vencidos, alimenta el contador del menu
   attention: [],        // filas de v_steps_attention
 };
 
 export const isAdmin = () => state.profile?.role === 'admin';
+
+/** Jefe de area: asigna tareas a otros y ve las metricas. El admin tambien. */
+export const isJefe = () => ['admin', 'jefe'].includes(state.profile?.role);
 
 export const nombreDe = id => {
   if (!id) return null;
@@ -51,6 +55,7 @@ export function reset() {
   state.profile = null;
   state.profiles = [];
   state.templates = [];
+  state.taskTypes = [];
   state.overdue = 0;
   state.attention = [];
 }

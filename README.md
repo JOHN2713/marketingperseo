@@ -23,8 +23,9 @@ Cuando creas "Masterclass Octubre", el sistema clona la plantilla, calcula las f
 |---|---|---|
 | Visibilidad | Equipo compartido: todos ven todos los procesos | Es un equipo chico; la fricción de permisos no compensa |
 | Recordatorios | Solo visuales (badges, alertas, contadores) | Sin cron jobs ni Edge Functions en v1 |
-| Autenticación | Email + contraseña (Supabase Auth) | Simple, sin dependencias externas |
-| Roles | `admin` y `user` en tabla `profiles` | Admin gestiona plantillas y usuarios |
+| Autenticación | Email + contraseña (Supabase Auth), solo correos @perseo.ec | Simple, sin dependencias externas; nadie de fuera se registra |
+| Sesión | Se cierra tras 60 min sin actividad; JWT de 1 hora | Un equipo que comparte equipos no deja sesiones abiertas |
+| Roles | `user`, `jefe` y `admin` en tabla `profiles` | El jefe asigna tareas y ve métricas; el admin además gestiona plantillas y usuarios |
 | Build step | Ninguno | HTML/CSS/JS plano, todo por CDN. Deploy directo a Vercel |
 | Drag & drop | SortableJS + RPC `reorder_process_steps` | Reordena en una sola llamada, sin condiciones de carrera |
 | % de avance | Calculado por trigger en Postgres | Nunca se desincroniza con los pasos |
@@ -54,6 +55,7 @@ Cuando creas "Masterclass Octubre", el sistema clona la plantilla, calcula las f
 | [06 · Despliegue](docs/06-despliegue.md) | Supabase, GitHub, Vercel, variables, dominio |
 | [07 · Plantilla Masterclass](docs/07-plantilla-masterclass.md) | Los 24 pasos del proceso con tipo, prioridad y duración |
 | [08 · Notas de implementación](docs/08-notas-de-implementacion.md) | Correcciones a los scripts SQL y decisiones tomadas al construir |
+| [09 · Tareas y métricas](docs/09-tareas-y-metricas.md) | Tareas (lista y Kanban), informe por integrante, seguridad de sesión |
 
 Los scripts SQL listos para pegar en Supabase están en [`supabase/`](supabase/).
 
@@ -70,7 +72,7 @@ npx serve .                                          # http://localhost:3000
 
 `config.js` viene commiteado con valores de ejemplo. La app detecta que no lo has completado y te lo dice en pantalla en vez de fallar en silencio.
 
-En Supabase, ejecuta en orden: `schema.sql` → `functions.sql` → `policies.sql` → `seed-masterclass.sql`.
+En Supabase, ejecuta en orden: `schema.sql` → `functions.sql` → `policies.sql` → `seed-masterclass.sql` → `tasks.sql`.
 
 Luego registra tu usuario desde la app y promuévelo a admin:
 
