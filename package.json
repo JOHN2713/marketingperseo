@@ -1,0 +1,14 @@
+{
+  "name": "mkt-process",
+  "private": true,
+  "description": "Sitio estatico. package.json solo existe para que Railway sepa como servirlo.",
+  "scripts": {
+    "start": "serve . --no-port-switching"
+  },
+  "dependencies": {
+    "serve": "14.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
