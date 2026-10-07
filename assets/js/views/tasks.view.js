@@ -7,6 +7,8 @@
 import { state, isJefe, nombreDe } from '../store.js';
 import * as tasksService from '../services/tasks.service.js';
 import { ESTADOS, PRIORIDADES } from '../services/tasks.service.js';
+import { areaName } from '../services/areas.service.js';
+import { openCatalog, openAreasCatalog } from '../catalog-modal.js';
 import {
   esc, pill, empty, skeleton, fmtDate, fmtDateTime, fmtDuration, daysOverdue,
   toLocalInput, fromLocalInput, initials, isValidUrl,
@@ -28,7 +30,7 @@ let vista = leerVista();
 let filtros = filtrosVacios();
 
 function filtrosVacios() {
-  return { q: '', status: '', assignee: '', priority: '', type: '', mias: false };
+  return { q: '', status: '', assignee: '', priority: '', type: '', area: '', mias: false };
 }
 
 function leerVista() {
@@ -46,7 +48,8 @@ export async function render(root, { query } = { query: new URLSearchParams() })
         <p class="view__sub">El trabajo del día a día del equipo de marketing.</p>
       </div>
       <div class="row-wrap">
-        ${isJefe() ? '<button class="btn btn--secondary" id="btn-tipos">Tipos de tarea</button>' : ''}
+        ${isJefe() ? `<button class="btn btn--secondary" id="btn-tipos">Tipos de tarea</button>
+                      <button class="btn btn--secondary" id="btn-areas">Áreas</button>` : ''}
         <button class="btn btn--primary" id="btn-nueva">+ Nueva tarea</button>
       </div>
     </div>
@@ -75,6 +78,10 @@ export async function render(root, { query } = { query: new URLSearchParams() })
         <option value="">Todo tipo</option>
         ${tiposActivos.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}
       </select>
+      <select class="select" id="f-area" aria-label="Filtrar por área solicitante">
+        <option value="">Toda área</option>
+        ${state.areas.filter(a => a.is_active).map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('')}
+      </select>
       <button class="btn btn--ghost btn--sm" id="btn-limpiar">Limpiar</button>
     </div>
 
@@ -82,6 +89,9 @@ export async function render(root, { query } = { query: new URLSearchParams() })
 
   root.querySelector('#btn-nueva').addEventListener('click', () => abrirTarea(null));
   root.querySelector('#btn-tipos')?.addEventListener('click', abrirTipos);
+  // Al cerrar, los selectores de la barra de filtros se rehacen con el catalogo nuevo.
+  root.querySelector('#btn-areas')?.addEventListener('click',
+    () => openAreasCatalog(() => render(raiz, { query: new URLSearchParams() })));
 
   root.querySelectorAll('[data-vista]').forEach(b => b.addEventListener('click', () => {
     vista = b.dataset.vista;
@@ -98,7 +108,7 @@ export async function render(root, { query } = { query: new URLSearchParams() })
   });
 
   for (const [id, key] of [['f-q', 'q'], ['f-status', 'status'], ['f-assignee', 'assignee'],
-                           ['f-priority', 'priority'], ['f-type', 'type']]) {
+                           ['f-priority', 'priority'], ['f-type', 'type'], ['f-area', 'area']]) {
     const el = root.querySelector(`#${id}`);
     el.value = filtros[key];
     el.addEventListener('input', () => { filtros[key] = el.value; pintar(); });
@@ -147,6 +157,7 @@ function aplicarFiltros() {
     if (filtros.assignee && !t.assignees.includes(filtros.assignee)) return false;
     if (filtros.priority && t.priority !== filtros.priority) return false;
     if (filtros.type && t.type_id !== filtros.type) return false;
+    if (filtros.area && t.area_id !== filtros.area) return false;
     if (q && !t.title.toLowerCase().includes(q)) return false;
     return true;
   });
@@ -221,7 +232,10 @@ function pintarLista(host, filas) {
       <button type="button" class="tlist__row" data-task="${esc(t.id)}">
         <span class="grow">
           <span class="truncate" style="display:block;font-weight:500">${esc(t.title)}</span>
-          ${t.resources.length ? `<span class="xs muted">${t.resources.length} recurso${t.resources.length === 1 ? '' : 's'}</span>` : ''}
+          <span class="xs muted">${esc([
+            areaName(t.area_id) && `Solicita: ${areaName(t.area_id)}`,
+            t.resources.length && `${t.resources.length} recurso${t.resources.length === 1 ? '' : 's'}`,
+          ].filter(Boolean).join(' · '))}</span>
         </span>
         <span class="tlist__hide">${tipoTag(t)}</span>
         <span class="tlist__hide">${avatares(t.assignees)}</span>
@@ -292,6 +306,7 @@ function tarjeta(t) {
                aria-label="${esc(t.title)}">
     <div class="kcard__title">${esc(t.title)}</div>
     <div class="row-wrap">${pill(t.priority)} ${tipoTag(t)}</div>
+    ${areaName(t.area_id) ? `<div class="xs muted">Solicita: ${esc(areaName(t.area_id))}</div>` : ''}
     <div class="spread">
       ${avatares(t.assignees)}
       ${fechaLimite(t)}
@@ -304,7 +319,7 @@ function tarjeta(t) {
 function abrirTarea(tarea) {
   const nueva = !tarea;
   const t = tarea || {
-    title: '', type_id: '', priority: 'media', status: 'pendiente', due_date: '',
+    title: '', type_id: '', area_id: '', priority: 'media', status: 'pendiente', due_date: '',
     started_at: null, finished_at: null, observations: '',
     assignees: [state.user.id], resources: [], created_by: state.user.id,
   };
@@ -312,6 +327,7 @@ function abrirTarea(tarea) {
   const jefe = isJefe();
   const dis = editable ? '' : ' disabled';
   const tipos = state.taskTypes.filter(x => x.is_active || x.id === t.type_id);
+  const areas = state.areas.filter(x => x.is_active || x.id === t.area_id);
 
   // Sin ser jefe solo te puedes marcar o desmarcar a ti mismo.
   const personas = jefe ? state.profiles : state.profiles.filter(p => p.id === state.user.id || t.assignees.includes(p.id));
@@ -329,6 +345,13 @@ function abrirTarea(tarea) {
         <select class="select" id="tk-type"${dis}>
           <option value="">Sin tipo</option>
           ${tipos.map(x => `<option value="${esc(x.id)}"${x.id === t.type_id ? ' selected' : ''}>${esc(x.name)}${x.is_active ? '' : ' (inactivo)'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label for="tk-area">Área que solicita</label>
+        <select class="select" id="tk-area"${dis}>
+          <option value="">Sin área</option>
+          ${areas.map(x => `<option value="${esc(x.id)}"${x.id === t.area_id ? ' selected' : ''}>${esc(x.name)}${x.is_active ? '' : ' (inactiva)'}</option>`).join('')}
         </select>
       </div>
       <div class="field">
@@ -471,6 +494,7 @@ function abrirTarea(tarea) {
     const { data: id, error } = await tasksService.save(tarea?.id, {
       title,
       type_id: v('#tk-type'),
+      area_id: v('#tk-area'),
       priority: v('#tk-priority'),
       status: v('#tk-status'),
       due_date: v('#tk-due'),
@@ -515,67 +539,14 @@ function abrirTarea(tarea) {
 /* --- Catalogo de tipos (jefe) --------------------------------------------- */
 
 function abrirTipos() {
-  const filasHtml = () => state.taskTypes.map(x => `
-    <div class="res-row" style="grid-template-columns:minmax(0,1fr) auto" data-type="${esc(x.id)}">
-      <input class="input" type="text" value="${esc(x.name)}" aria-label="Nombre del tipo">
-      <label class="row xs muted" style="gap:6px;white-space:nowrap">
-        <input type="checkbox"${x.is_active ? ' checked' : ''}> Activo
-      </label>
-    </div>`).join('');
-
-  openModal({
+  openCatalog({
     title: 'Tipos de tarea',
-    body: `
-      <p class="modal__text">Los tipos inactivos dejan de ofrecerse en tareas nuevas, pero las tareas que ya los usan los conservan y siguen contando en las métricas.</p>
-      <div class="stack" id="tp-list">${filasHtml()}</div>
-      <div class="row">
-        <input class="input" id="tp-new" type="text" placeholder="Nuevo tipo: Reel, Newsletter, Evento..." autocomplete="off">
-        <button type="button" class="btn btn--secondary" id="tp-add">Agregar</button>
-      </div>
-      <p class="error-text" id="tp-error" role="alert"></p>`,
-    actions: [{ label: 'Listo', variant: 'primary', onClick: ({ close }) => close() }],
-    onOpen: ({ modal }) => {
-      const err = modal.querySelector('#tp-error');
-      const enlazar = () => {
-        modal.querySelectorAll('[data-type]').forEach(row => {
-          const id = row.dataset.type;
-          const nombre = row.querySelector('input[type="text"]');
-          const activo = row.querySelector('input[type="checkbox"]');
-          nombre.addEventListener('change', async () => {
-            const v = nombre.value.trim();
-            if (!v) { nombre.value = tasksService.typeName(id); return; }
-            const { error } = await tasksService.updateType(id, { name: v });
-            err.textContent = error ? traducir(error) : '';
-            await tasksService.refreshTypes();
-          });
-          activo.addEventListener('change', async () => {
-            const { error } = await tasksService.updateType(id, { is_active: activo.checked });
-            if (error) { err.textContent = traducir(error); activo.checked = !activo.checked; return; }
-            await tasksService.refreshTypes();
-          });
-        });
-      };
-      enlazar();
-
-      const agregar = async () => {
-        const input = modal.querySelector('#tp-new');
-        const v = input.value.trim();
-        if (!v) return;
-        const { error } = await tasksService.createType(v);
-        if (error) { err.textContent = traducir(error); return; }
-        err.textContent = '';
-        input.value = '';
-        await tasksService.refreshTypes();
-        modal.querySelector('#tp-list').innerHTML = filasHtml();
-        enlazar();
-        input.focus();
-      };
-      modal.querySelector('#tp-add').addEventListener('click', agregar);
-      modal.querySelector('#tp-new').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); agregar(); }
-      });
-    },
-    // Los selectores de tipo de la barra de filtros se rehacen con el catalogo nuevo.
+    help: 'Los tipos inactivos dejan de ofrecerse en tareas nuevas, pero las tareas que ya los usan los conservan y siguen contando en las métricas.',
+    placeholder: 'Nuevo tipo: Reel, Newsletter, Evento...',
+    items: () => state.taskTypes,
+    create: tasksService.createType,
+    update: tasksService.updateType,
+    refresh: tasksService.refreshTypes,
     onClose: () => render(raiz, { query: new URLSearchParams() }),
   });
 }

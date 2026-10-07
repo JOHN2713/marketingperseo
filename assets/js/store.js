@@ -10,6 +10,7 @@ export const state = {
   profiles: [],         // todo el equipo, para los selectores de responsable
   templates: [],        // plantillas activas
   taskTypes: [],        // catalogo de tipos de tarea (activos e inactivos)
+  areas: [],            // catalogo de areas: solicitante de tareas y responsables de eventos
   overdue: 0,           // pasos vencidos, alimenta el contador del menu
   attention: [],        // filas de v_steps_attention
 };
@@ -56,6 +57,7 @@ export function reset() {
   state.profiles = [];
   state.templates = [];
   state.taskTypes = [];
+  state.areas = [];
   state.overdue = 0;
   state.attention = [];
 }

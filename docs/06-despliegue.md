@@ -20,6 +20,7 @@ En **SQL Editor**, en este orden y uno por uno:
 3. supabase/policies.sql
 4. supabase/seed-masterclass.sql
 5. supabase/tasks.sql
+6. supabase/events-audit.sql
 ```
 
 Verificar que RLS quedó activo:

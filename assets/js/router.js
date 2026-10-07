@@ -12,10 +12,12 @@ const routes = [
   { path: /^#\/procesos$/,         view: 'processes'                         },
   { path: /^#\/procesos\/(.+)$/,   view: 'process-detail'                    },
   { path: /^#\/tareas$/,           view: 'tasks'                             },
+  { path: /^#\/calendario$/,       view: 'calendar'                          },
   { path: /^#\/metricas$/,         view: 'metrics',         need: 'jefe'     },
   { path: /^#\/plantillas$/,       view: 'templates',       need: 'admin'    },
   { path: /^#\/plantillas\/(.+)$/, view: 'template-detail', need: 'admin'    },
   { path: /^#\/usuarios$/,         view: 'users',           need: 'admin'    },
+  { path: /^#\/auditoria$/,        view: 'audit',           need: 'admin'    },
 ];
 
 const PERMITE = { admin: isAdmin, jefe: isJefe };

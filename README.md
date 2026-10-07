@@ -56,6 +56,7 @@ Cuando creas "Masterclass Octubre", el sistema clona la plantilla, calcula las f
 | [07 · Plantilla Masterclass](docs/07-plantilla-masterclass.md) | Los 24 pasos del proceso con tipo, prioridad y duración |
 | [08 · Notas de implementación](docs/08-notas-de-implementacion.md) | Correcciones a los scripts SQL y decisiones tomadas al construir |
 | [09 · Tareas y métricas](docs/09-tareas-y-metricas.md) | Tareas (lista y Kanban), informe por integrante, seguridad de sesión |
+| [10 · Calendario y auditoría](docs/10-calendario-auditoria.md) | Áreas, calendario de eventos, Inicio reorganizado, registro de auditoría |
 
 Los scripts SQL listos para pegar en Supabase están en [`supabase/`](supabase/).
 
@@ -72,7 +73,7 @@ npx serve .                                          # http://localhost:3000
 
 `config.js` viene commiteado con valores de ejemplo. La app detecta que no lo has completado y te lo dice en pantalla en vez de fallar en silencio.
 
-En Supabase, ejecuta en orden: `schema.sql` → `functions.sql` → `policies.sql` → `seed-masterclass.sql` → `tasks.sql`.
+En Supabase, ejecuta en orden: `schema.sql` → `functions.sql` → `policies.sql` → `seed-masterclass.sql` → `tasks.sql` → `events-audit.sql`.
 
 Luego registra tu usuario desde la app y promuévelo a admin:
 
@@ -89,7 +90,6 @@ Estas cosas están pensadas pero no se construyen todavía. Están listadas para
 - Notificaciones por email o WhatsApp
 - Subida de archivos adjuntos por paso
 - Comentarios con hilos (el campo `observations` cubre el caso por ahora)
-- Vista Gantt o calendario mensual
+- Vista Gantt
 - Exportación a PDF o Excel
-- Histórico de cambios / auditoría
 - Multi-workspace o multi-cliente

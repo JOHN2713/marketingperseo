@@ -6,7 +6,7 @@ import { supabase } from '../supabase.js';
 import { state } from '../store.js';
 
 const CAMPOS = `
-  id, name, description, icon, color, resource_url, is_active,
+  id, name, description, icon, color, resource_url, is_active, creates_event,
   created_by, created_at, updated_at
 `;
 

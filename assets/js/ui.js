@@ -62,6 +62,19 @@ export function fmtRange(from, to) {
   return `${fmtDate(from, cross)} → ${fmtDate(to, cross)}`;
 }
 
+export function fmtTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (isNaN(d)) return '';
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Fecha local 'YYYY-MM-DD' de un Date o timestamp. */
+export function isoDay(value) {
+  const d = value instanceof Date ? value : new Date(value);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function fmtDateTime(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
@@ -118,6 +131,10 @@ const CODIGOS = {
   '23514':    'Alguno de los datos está fuera de rango. Revisa fechas y porcentajes.',
   'PGRST116': 'No se encontró el registro. Puede que alguien lo haya eliminado.',
   'P0002':    'No se encontró el registro. Puede que alguien lo haya eliminado.',
+  // Tabla o funcion que la base todavia no tiene: falta correr un script.
+  '42P01':    'Falta ejecutar los scripts SQL nuevos en Supabase (tasks.sql y events-audit.sql).',
+  'PGRST205': 'Falta ejecutar los scripts SQL nuevos en Supabase (tasks.sql y events-audit.sql).',
+  'PGRST202': 'Falta ejecutar los scripts SQL nuevos en Supabase (tasks.sql y events-audit.sql).',
 };
 
 const MENSAJES = [
@@ -135,6 +152,8 @@ const MENSAJES = [
   // GoTrue envuelve cualquier excepcion de un trigger de auth.users en este
   // mensaje generico; el unico trigger que rechaza registros es el de dominio.
   [/database error saving new user/i,   'No se pudo crear la cuenta. Usa tu correo de la empresa.'],
+  [/events_time_range/i,                'La hora de fin no puede ser anterior a la de inicio.'],
+  [/confirmar o rechazar un evento/i,   'Solo el jefe de área puede confirmar o rechazar un evento.'],
   [/task_resources_url_check/i,         'Algún link no es válido. Debe empezar con http:// o https://'],
 ];
 
@@ -324,6 +343,8 @@ export const ETIQUETA = {
   completado: 'Completado', omitido: 'Omitido', en_revision: 'En revisión',
   planificado: 'Planificado', pausado: 'Pausado', cancelado: 'Cancelado',
   baja: 'Baja', media: 'Media', alta: 'Alta', urgente: 'Urgente',
+  por_aprobacion: 'Por aprobación', confirmado: 'Confirmado', rechazado: 'Rechazado',
+  presencial: 'Presencial', virtual: 'Virtual',
 };
 
 export const ROL = { admin: 'Administrador', jefe: 'Jefe de área', user: 'Usuario' };

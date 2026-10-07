@@ -3,6 +3,7 @@
    Mismo patron de drag & drop que el detalle de proceso, con
    reorder_template_steps en lugar de reorder_process_steps.
    ===================================================================== */
+import { state } from '../store.js';
 import * as templatesService from '../services/templates.service.js';
 import {
   esc, pill, empty, skeleton, debounce, saveState,
@@ -73,6 +74,10 @@ function pintar() {
           ${plantilla.resource_url
             ? `<a class="tag" href="${esc(plantilla.resource_url)}" target="_blank" rel="noopener">🔗 Recurso</a>` : ''}
         </div>
+        <label class="row sm mt-4" style="gap:8px">
+          <input type="checkbox" id="tpl-event"${plantilla.creates_event ? ' checked' : ''}>
+          Cada proceso de esta plantilla crea su evento en el Calendario
+        </label>
       </div>
       <button class="btn btn--primary" id="btn-add">+ Paso</button>
     </div>
@@ -85,6 +90,20 @@ function pintar() {
     </p>`;
 
   raiz.querySelector('#btn-add').addEventListener('click', agregarPaso);
+
+  const chkEvento = raiz.querySelector('#tpl-event');
+  chkEvento.addEventListener('change', async () => {
+    const { data, error } = await templatesService.update(plantilla.id, { creates_event: chkEvento.checked });
+    if (error) { toast.error(traducir(error)); chkEvento.checked = !chkEvento.checked; return; }
+    plantilla = data;
+    // El formulario de "Crear proceso" lee este dato del cache.
+    const enCache = state.templates.find(t => t.id === plantilla.id);
+    if (enCache) enCache.creates_event = plantilla.creates_event;
+    toast.success(plantilla.creates_event
+      ? 'Los procesos nuevos de esta plantilla crearán su evento'
+      : 'Los procesos nuevos ya no crearán evento');
+  });
+
   pintarPasos();
 }
 

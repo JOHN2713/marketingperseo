@@ -9,7 +9,7 @@ export const ESTADOS = ['pendiente', 'en_curso', 'en_revision', 'completado', 'b
 export const PRIORIDADES = ['urgente', 'alta', 'media', 'baja'];
 
 const CAMPOS = `
-  id, title, type_id, priority, status, due_date, started_at, finished_at,
+  id, title, type_id, area_id, priority, status, due_date, started_at, finished_at,
   observations, created_by, created_at, updated_at,
   assignees:task_assignees ( profile_id ),
   resources:task_resources ( id, label, url, sort_order )

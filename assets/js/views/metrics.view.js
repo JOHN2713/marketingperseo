@@ -15,6 +15,7 @@
 import { state, nombreDe } from '../store.js';
 import * as tasksService from '../services/tasks.service.js';
 import { ESTADOS, PRIORIDADES } from '../services/tasks.service.js';
+import { areaName } from '../services/areas.service.js';
 import {
   esc, empty, skeleton, today, parseDate, fmtDate, fmtHours,
   traducir, enableTips, ETIQUETA,
@@ -47,7 +48,7 @@ function haceDias(n) {
 }
 
 function filtrosIniciales() {
-  return { from: haceDias(29), to: today(), assignee: '', status: '', priority: '', type: '' };
+  return { from: haceDias(29), to: today(), assignee: '', status: '', priority: '', type: '', area: '' };
 }
 
 export async function render(root) {
@@ -89,6 +90,10 @@ export async function render(root) {
         <option value="">Todo tipo</option>
         ${state.taskTypes.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}
       </select>
+      <select class="select" id="m-area" aria-label="Filtrar por área solicitante">
+        <option value="">Toda área</option>
+        ${state.areas.map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('')}
+      </select>
       <button class="btn btn--ghost btn--sm" id="m-limpiar">Limpiar</button>
     </div>
 
@@ -127,7 +132,7 @@ export async function render(root) {
   }));
 
   for (const [id, key] of [['m-assignee', 'assignee'], ['m-status', 'status'],
-                           ['m-priority', 'priority'], ['m-type', 'type']]) {
+                           ['m-priority', 'priority'], ['m-type', 'type'], ['m-area', 'area']]) {
     const el = root.querySelector(`#${id}`);
     el.value = filtros[key];
     el.addEventListener('input', () => { filtros[key] = el.value; pintar(); });
@@ -182,6 +187,7 @@ function filtradas() {
     if (filtros.status && t.status !== filtros.status) return false;
     if (filtros.priority && t.priority !== filtros.priority) return false;
     if (filtros.type && t.type_id !== filtros.type) return false;
+    if (filtros.area && t.area_id !== filtros.area) return false;
     return true;
   });
 }
@@ -273,6 +279,7 @@ function pintar() {
           <div class="seg" role="group" aria-label="Agrupar tiempo por">
             <button type="button" data-tiempo="persona" aria-pressed="${tiempoPor === 'persona'}">Integrante</button>
             <button type="button" data-tiempo="tipo" aria-pressed="${tiempoPor === 'tipo'}">Tipo</button>
+            <button type="button" data-tiempo="area" aria-pressed="${tiempoPor === 'area'}">Área</button>
           </div>
         </div>
         ${graficoTiempo(lista, personas)}
@@ -358,14 +365,18 @@ function graficoAvance(personas) {
 
 function graficoTiempo(lista, personas) {
   let filas;
-  if (tiempoPor === 'tipo') {
+  if (tiempoPor === 'tipo' || tiempoPor === 'area') {
+    const porArea = tiempoPor === 'area';
     const grupos = new Map();
     lista.forEach(t => {
-      const k = t.type_id || '';
+      const k = (porArea ? t.area_id : t.type_id) || '';
       if (!grupos.has(k)) grupos.set(k, []);
       grupos.get(k).push(t);
     });
-    filas = [...grupos].map(([k, ts]) => ({ nombre: tasksService.typeName(k) || 'Sin tipo', ...promedioHoras(ts) }));
+    filas = [...grupos].map(([k, ts]) => ({
+      nombre: (porArea ? areaName(k) : tasksService.typeName(k)) || (porArea ? 'Sin área' : 'Sin tipo'),
+      ...promedioHoras(ts),
+    }));
   } else {
     filas = personas.map(p => ({ nombre: p.nombre, ...p.tiempo }));
   }

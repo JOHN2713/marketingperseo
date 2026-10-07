@@ -10,6 +10,7 @@ import * as processesService from './services/processes.service.js';
 import * as usersService from './services/users.service.js';
 import * as templatesService from './services/templates.service.js';
 import * as tasksService from './services/tasks.service.js';
+import * as areasService from './services/areas.service.js';
 import { toast, traducir, applyRoleUI } from './ui.js';
 
 const REFRESCO_MS = 5 * 60 * 1000;   // doc 03 F7: sin websockets en v1
@@ -70,14 +71,16 @@ on('attention', () => {
 
 /* --- 4 · Cache ligero -------------------------------------------------- */
 async function cargarCache() {
-  const [perfiles, plantillas, tipos] = await Promise.all([
+  const [perfiles, plantillas, tipos, areas] = await Promise.all([
     usersService.list(),
     templatesService.list({ onlyActive: true }),
     tasksService.listTypes(),
+    areasService.list(),
   ]);
   if (perfiles.data)   state.profiles  = perfiles.data;
   if (plantillas.data) state.templates = plantillas.data;
   if (tipos.data)      state.taskTypes = tipos.data;
+  if (areas.data)      state.areas     = areas.data;
 }
 
 await Promise.all([cargarCache(), processesService.refreshAttention()]);

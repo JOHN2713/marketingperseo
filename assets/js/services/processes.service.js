@@ -46,12 +46,18 @@ export async function create({ name, description = null, start_date = null, prio
     .single();
 }
 
-/** Clona la plantilla con fechas en cascada. Todo dentro de una transaccion. */
-export async function createFromTemplate(templateId, name, startDate) {
-  const { data, error } = await supabase.rpc('create_process_from_template', {
+/**
+ * Clona la plantilla con fechas en cascada. Si la plantilla tiene
+ * `creates_event` (Masterclass), crea tambien su evento en el calendario:
+ * en `eventAt`, o de dia completo en la fecha de fin si viene nulo.
+ * Todo dentro de una transaccion.
+ */
+export async function createFromTemplate(templateId, name, startDate, eventAt = null) {
+  const { data, error } = await supabase.rpc('create_process_with_event', {
     p_template_id: templateId,
     p_name: name,
     p_start_date: startDate,
+    p_event_at: eventAt,
   });
   return { data, error };
 }

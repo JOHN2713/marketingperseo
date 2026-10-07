@@ -474,3 +474,82 @@ a.card:hover, .card--link:hover { border-color: var(--accent); box-shadow: var(-
   padding: 6px 10px; font-size: var(--fs-xs); line-height: 1.4; box-shadow: var(--shadow-md);
   max-width: 260px;
 }
+
+
+/* =====================================================================
+   Calendario de eventos
+   El estado nunca va solo en color: borde solido / punteado / tachado,
+   mas la leyenda y la pastilla con texto en el detalle.
+   ===================================================================== */
+.cal { overflow: hidden; }
+.cal__month { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; min-width: 170px; }
+.cal__head { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.cal__head span {
+  padding: var(--s-2) var(--s-2); text-align: left;
+  font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-500);
+}
+.cal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--line); gap: 1px; }
+.cal__cell {
+  background: var(--surface); min-height: 112px; padding: 4px;
+  display: flex; flex-direction: column; gap: 2px; min-width: 0; cursor: pointer;
+}
+.cal__cell:hover { background: #FBFAFD; }
+.cal__cell--out { background: #F8F7FA; }
+.cal__cell--out .cal__num { color: var(--ink-300); }
+.cal__num {
+  font-family: var(--font-data); font-size: var(--fs-xs); color: var(--ink-500);
+  width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+}
+.cal__cell--today .cal__num { background: var(--accent); color: #fff; font-weight: 600; }
+.cal__more {
+  background: none; border: 0; padding: 0 4px; text-align: left; cursor: pointer;
+  font-size: var(--fs-xs); color: var(--ink-500);
+}
+.cal__more:hover { color: var(--accent); text-decoration: underline; }
+
+.ev {
+  display: flex; align-items: baseline; gap: 4px; width: 100%; min-width: 0;
+  padding: 2px 6px; border: 0; border-left: 3px solid; border-radius: 3px;
+  font-size: var(--fs-xs); line-height: 1.35; text-align: left; color: var(--ink-900); cursor: pointer;
+}
+.ev:hover { filter: brightness(.96); }
+.ev__time { font-family: var(--font-data); font-size: 10px; color: var(--ink-500); flex: 0 0 auto; }
+.ev__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ev--confirmado     { background: rgba(47,133,90,.14);  border-left-color: var(--st-completado); }
+.ev--por_aprobacion { background: rgba(194,124,14,.13); border-left-color: var(--st-en-revision); border-left-style: dashed; }
+.ev--rechazado      { background: rgba(153,147,165,.16); border-left-color: var(--st-pendiente); color: var(--ink-500); }
+.ev--rechazado .ev__title { text-decoration: line-through; }
+
+.ev-key { width: 4px; height: 14px; border-radius: 2px; display: inline-block; flex: 0 0 auto; border-left: 4px solid; }
+.ev-key--confirmado     { border-color: var(--st-completado); }
+.ev-key--por_aprobacion { border-color: var(--st-en-revision); border-left-style: dashed; }
+.ev-key--rechazado      { border-color: var(--st-pendiente); }
+
+.pill--confirmado     { color: var(--st-completado); background: rgba(47,133,90,.14); }
+.pill--por_aprobacion { color: #9A620B;              background: rgba(194,124,14,.14); }
+.pill--rechazado      { color: #6E6A79;              background: rgba(153,147,165,.20); }
+
+.agenda__day + .agenda__day { border-top: 1px solid var(--line); }
+.agenda__date {
+  padding: var(--s-3) var(--s-4) var(--s-1);
+  font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-500);
+}
+.agenda__day--today .agenda__date { color: var(--accent); }
+.agenda__row { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; font: inherit; }
+
+@media (max-width: 700px) {
+  .cal__cell { min-height: 64px; padding: 2px; }
+  .ev__time { display: none; }
+  .ev { padding: 1px 3px; }
+}
+
+/* --- Auditoria -------------------------------------------------------- */
+.audit__row { cursor: pointer; }
+.audit__row:hover { background: var(--accent-soft); }
+.audit__row[aria-expanded="true"] { background: var(--accent-soft); }
+.audit__row[aria-expanded="true"] td { border-bottom-color: transparent; }
+.audit__sum { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.audit__detail > td { background: #FBFAFD; padding: var(--s-2) var(--s-4) var(--s-4); }
+.audit__diff { max-width: 720px; }
+.audit__diff th, .audit__diff td { padding: var(--s-2) var(--s-3); vertical-align: top; overflow-wrap: anywhere; }
+.audit__old { color: var(--ink-500); text-decoration: line-through; text-decoration-color: var(--ink-300); }

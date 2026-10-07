@@ -6,7 +6,7 @@ import * as processesService from '../services/processes.service.js';
 import { supabase } from '../supabase.js';
 import { navigate } from '../router.js';
 import {
-  esc, pill, bar, empty, skeleton, fmtRange, today,
+  esc, pill, bar, empty, skeleton, fmtRange, today, fromLocalInput,
   toast, traducir, openModal, ETIQUETA,
 } from '../ui.js';
 
@@ -184,13 +184,24 @@ function abrirNuevo() {
         <input class="input" id="np-start" type="date" value="${today()}">
         <span class="xs dim">Las fechas de los pasos se calculan en cascada desde aquí. Después las mueves.</span>
       </div>
+      <div class="field hidden" id="np-event-field">
+        <label for="np-event">Fecha y hora del evento</label>
+        <input class="input" id="np-event" type="datetime-local">
+        <span class="xs dim">Esta plantilla crea su evento en el Calendario, por aprobación del jefe de área.
+          Si lo dejas vacío, queda de día completo en la fecha de fin del proceso.</span>
+      </div>
       <p class="error-text" id="np-error" role="alert"></p>`,
     actions: [
       { label: 'Cancelar', variant: 'ghost', onClick: ({ close }) => close() },
       { label: 'Crear', variant: 'primary', onClick: crear },
     ],
     onOpen: ({ modal }) => {
-      if (!plantillas.length) modal.querySelector('#np-template').value = '';
+      const sel = modal.querySelector('#np-template');
+      if (!plantillas.length) sel.value = '';
+      const sync = () => modal.querySelector('#np-event-field')
+        .classList.toggle('hidden', !plantillas.find(t => t.id === sel.value)?.creates_event);
+      sel.addEventListener('change', sync);
+      sync();
       modal.querySelector('#np-name').focus();
     },
   });
@@ -202,15 +213,19 @@ function abrirNuevo() {
     const templateId = modal.querySelector('#np-template').value;
     const name = modal.querySelector('#np-name').value.trim();
     const start = modal.querySelector('#np-start').value;
+    const conEvento = !!plantillas.find(t => t.id === templateId)?.creates_event;
+    const eventoLocal = conEvento ? modal.querySelector('#np-event').value : '';
+    const eventAt = fromLocalInput(eventoLocal);
 
     if (!name) { err.textContent = 'Ponle un nombre al proceso.'; return; }
     if (templateId && !start) { err.textContent = 'Indica la fecha de inicio para calcular el cronograma.'; return; }
+    if (eventoLocal && eventoLocal.slice(0, 10) < start) { err.textContent = 'El evento no puede ser antes de que empiece el proceso.'; return; }
 
     btn.disabled = true;
     btn.textContent = 'Creando...';
 
     const res = templateId
-      ? await processesService.createFromTemplate(templateId, name, start)
+      ? await processesService.createFromTemplate(templateId, name, start, eventAt)
       : await processesService.create({ name, start_date: start || null });
 
     btn.disabled = false;
@@ -220,7 +235,7 @@ function abrirNuevo() {
 
     const id = templateId ? res.data : res.data.id;
     close();
-    toast.success('Proceso creado');
+    toast.success(conEvento ? 'Proceso creado, con su evento en el Calendario' : 'Proceso creado');
     await processesService.refreshAttention();
     navigate(`#/procesos/${id}`);
   }

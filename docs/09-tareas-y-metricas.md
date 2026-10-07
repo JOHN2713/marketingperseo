@@ -67,7 +67,7 @@ Lo que el usuario corrige a mano no se sobrescribe: el trigger solo llena campos
 
 ### RPC `save_task(p_id, p_data, p_assignees, p_resources)`
 
-Crea o actualiza la tarea, sus responsables y sus links **en una sola transacción**. Es `security invoker`, así que RLS se aplica igual que si el usuario escribiera directo en las tablas. Pasar `null` en responsables o recursos los deja como están.
+Crea o actualiza la tarea, sus responsables y sus links **en una sola transacción**. Es `security invoker`, así que RLS se aplica igual que si el usuario escribiera directo en las tablas. Pasar `null` en responsables o recursos los deja como están. `events-audit.sql` la reemplaza por una versión que además guarda el área solicitante y solo toca los links que cambiaron (ver [doc 10](10-calendario-auditoria.md)).
 
 ### Permisos (RLS)
 
