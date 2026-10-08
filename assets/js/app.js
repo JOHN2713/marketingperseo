@@ -11,6 +11,7 @@ import * as usersService from './services/users.service.js';
 import * as templatesService from './services/templates.service.js';
 import * as tasksService from './services/tasks.service.js';
 import * as areasService from './services/areas.service.js';
+import * as settingsService from './services/settings.service.js';
 import { toast, traducir, applyRoleUI } from './ui.js';
 
 const REFRESCO_MS = 5 * 60 * 1000;   // doc 03 F7: sin websockets en v1
@@ -76,6 +77,7 @@ async function cargarCache() {
     templatesService.list({ onlyActive: true }),
     tasksService.listTypes(),
     areasService.list(),
+    settingsService.load(),
   ]);
   if (perfiles.data)   state.profiles  = perfiles.data;
   if (plantillas.data) state.templates = plantillas.data;

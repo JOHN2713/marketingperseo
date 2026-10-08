@@ -100,7 +100,7 @@ Crea o actualiza la tarea, sus responsables y sus links **en una sola transacci�
 - **Qué entra**: las tareas **creadas** dentro del rango de fechas que cumplen los filtros (responsable, estado, prioridad y tipo).
 - **Varios responsables**: la tarea cuenta para cada uno en su fila; los totales del equipo la cuentan una vez.
 - **Promedios**: tareas ÷ días del rango (por día), ÷ días/7 (por semana) y ÷ días/30,44 (por mes). Con el filtro de estado en *Completado*, se convierten en el ritmo de cierre.
-- **Tiempo**: `fin − inicio` en horas de reloj (no descuenta noches ni fines de semana). Una tarea sin alguna de las dos horas no entra al promedio; la tarjeta muestra cuántas sí se midieron.
+- **Tiempo**: horas laborales entre el inicio y el fin (lunes a viernes de 09:00 a 18:00 por defecto; ver [doc 11](11-horario-y-archivo.md)). Una tarea sin alguna de las dos horas no entra al promedio; la tarjeta muestra cuántas sí se midieron.
 
 ### Contenido
 

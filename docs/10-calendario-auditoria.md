@@ -85,7 +85,7 @@ El selector *Mis tareas / Equipo* afecta solo a los bloques 1 a 3 y recuerda la 
 
 ### Qué se registra
 
-Tabla `audit_log (id, at, actor_id, action, table_name, record_id, label, context, changes)`, llenada por el trigger `audit_row` en: tareas (con sus responsables y links), tipos de tarea, áreas, eventos (con sus áreas), procesos, pasos, plantillas, pasos de plantilla y usuarios.
+Tabla `audit_log (id, at, actor_id, action, table_name, record_id, label, context, changes)`, llenada por el trigger `audit_row` en: tareas (con sus responsables y links), tipos de tarea, áreas, horario laboral, eventos (con sus áreas), procesos, pasos, plantillas, pasos de plantilla y usuarios.
 
 - **Edición**: solo los campos que cambiaron, con el valor anterior y el nuevo.
 - **Alta y baja**: la fila completa.

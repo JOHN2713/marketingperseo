@@ -57,6 +57,7 @@ Cuando creas "Masterclass Octubre", el sistema clona la plantilla, calcula las f
 | [08 · Notas de implementación](docs/08-notas-de-implementacion.md) | Correcciones a los scripts SQL y decisiones tomadas al construir |
 | [09 · Tareas y métricas](docs/09-tareas-y-metricas.md) | Tareas (lista y Kanban), informe por integrante, seguridad de sesión |
 | [10 · Calendario y auditoría](docs/10-calendario-auditoria.md) | Áreas, calendario de eventos, Inicio reorganizado, registro de auditoría |
+| [11 · Horario y archivo](docs/11-horario-y-archivo.md) | Tiempo en horas laborales, tareas archivadas, configuración |
 
 Los scripts SQL listos para pegar en Supabase están en [`supabase/`](supabase/).
 
@@ -73,7 +74,7 @@ npx serve .                                          # http://localhost:3000
 
 `config.js` viene commiteado con valores de ejemplo. La app detecta que no lo has completado y te lo dice en pantalla en vez de fallar en silencio.
 
-En Supabase, ejecuta en orden: `schema.sql` → `functions.sql` → `policies.sql` → `seed-masterclass.sql` → `tasks.sql` → `events-audit.sql`.
+En Supabase, ejecuta en orden: `schema.sql` → `functions.sql` → `policies.sql` → `seed-masterclass.sql` → `tasks.sql` → `events-audit.sql` → `work-hours.sql`.
 
 Luego registra tu usuario desde la app y promuévelo a admin:
 

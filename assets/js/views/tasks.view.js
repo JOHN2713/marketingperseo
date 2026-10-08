@@ -8,9 +8,11 @@ import { state, isJefe, nombreDe } from '../store.js';
 import * as tasksService from '../services/tasks.service.js';
 import { ESTADOS, PRIORIDADES } from '../services/tasks.service.js';
 import { areaName } from '../services/areas.service.js';
+import * as settingsService from '../services/settings.service.js';
 import { openCatalog, openAreasCatalog } from '../catalog-modal.js';
+import { workHours, describeSchedule, isArchived } from '../worktime.js';
 import {
-  esc, pill, empty, skeleton, fmtDate, fmtDateTime, fmtDuration, daysOverdue,
+  esc, pill, empty, skeleton, fmtDate, fmtDateTime, fmtHours, isoDay, daysOverdue,
   toLocalInput, fromLocalInput, initials, isValidUrl,
   toast, traducir, openModal, confirmAction, ETIQUETA,
 } from '../ui.js';
@@ -33,8 +35,18 @@ function filtrosVacios() {
   return { q: '', status: '', assignee: '', priority: '', type: '', area: '', mias: false };
 }
 
+/** 'lista' | 'kanban' | 'archivo'. El archivo no se recuerda: siempre se entra por las activas. */
 function leerVista() {
   try { return localStorage.getItem(VISTA_KEY) === 'kanban' ? 'kanban' : 'lista'; } catch { return 'lista'; }
+}
+
+const enArchivo = () => vista === 'archivo';
+
+/** "3 h 20 min" laborales, "en marcha" si aun no termina, "—" si no empezo. */
+function tiempo(t) {
+  const h = tasksService.hours(t);
+  if (h !== null) return fmtHours(h);
+  return t.started_at ? 'en marcha' : '—';
 }
 
 export async function render(root, { query } = { query: new URLSearchParams() }) {
@@ -49,7 +61,8 @@ export async function render(root, { query } = { query: new URLSearchParams() })
       </div>
       <div class="row-wrap">
         ${isJefe() ? `<button class="btn btn--secondary" id="btn-tipos">Tipos de tarea</button>
-                      <button class="btn btn--secondary" id="btn-areas">Áreas</button>` : ''}
+                      <button class="btn btn--secondary" id="btn-areas">Áreas</button>
+                      <button class="btn btn--secondary" id="btn-horario">Horario y archivo</button>` : ''}
         <button class="btn btn--primary" id="btn-nueva">+ Nueva tarea</button>
       </div>
     </div>
@@ -59,6 +72,7 @@ export async function render(root, { query } = { query: new URLSearchParams() })
       <div class="seg" role="group" aria-label="Forma de ver las tareas">
         <button type="button" data-vista="lista" aria-pressed="${vista === 'lista'}">Lista</button>
         <button type="button" data-vista="kanban" aria-pressed="${vista === 'kanban'}">Kanban</button>
+        <button type="button" data-vista="archivo" aria-pressed="${vista === 'archivo'}">Archivadas</button>
       </div>
       <button type="button" class="chip" id="f-mias" aria-pressed="${filtros.mias}">Mis tareas</button>
       <input class="input input--search" id="f-q" type="search" placeholder="Buscar por tema...">
@@ -85,6 +99,7 @@ export async function render(root, { query } = { query: new URLSearchParams() })
       <button class="btn btn--ghost btn--sm" id="btn-limpiar">Limpiar</button>
     </div>
 
+    <p class="xs muted" id="tareas-nota" style="margin:calc(var(--s-2) * -1) 0 var(--s-3)"></p>
     <section id="tareas">${skeleton(5)}</section>`;
 
   root.querySelector('#btn-nueva').addEventListener('click', () => abrirTarea(null));
@@ -92,12 +107,17 @@ export async function render(root, { query } = { query: new URLSearchParams() })
   // Al cerrar, los selectores de la barra de filtros se rehacen con el catalogo nuevo.
   root.querySelector('#btn-areas')?.addEventListener('click',
     () => openAreasCatalog(() => render(raiz, { query: new URLSearchParams() })));
+  root.querySelector('#btn-horario')?.addEventListener('click', abrirHorario);
 
-  root.querySelectorAll('[data-vista]').forEach(b => b.addEventListener('click', () => {
+  root.querySelectorAll('[data-vista]').forEach(b => b.addEventListener('click', async () => {
+    const cambiaOrigen = enArchivo() !== (b.dataset.vista === 'archivo');
     vista = b.dataset.vista;
-    try { localStorage.setItem(VISTA_KEY, vista); } catch { /* sin storage */ }
+    if (!enArchivo()) { try { localStorage.setItem(VISTA_KEY, vista); } catch { /* sin storage */ } }
     root.querySelectorAll('[data-vista]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    pintar();
+    sincronizarBarra();
+    // Activas y archivadas son consultas distintas; lista y kanban comparten datos.
+    if (cambiaOrigen) await recargar();
+    else pintar();
   }));
 
   const chipMias = root.querySelector('#f-mias');
@@ -119,14 +139,29 @@ export async function render(root, { query } = { query: new URLSearchParams() })
     render(root, { query: new URLSearchParams() });
   });
 
+  sincronizarBarra();
   await recargar();
 
-  // Enlace directo desde Metricas: #/tareas?tarea=<id>
+  // Enlace directo desde Inicio o Metricas: #/tareas?tarea=<id>.
+  // Puede apuntar a una tarea ya archivada, que no esta en la lista cargada.
   const abrir = query?.get('tarea');
   if (abrir) {
-    const t = tareas.find(x => x.id === abrir);
+    const t = tareas.find(x => x.id === abrir) || (await tasksService.getById(abrir)).data;
     if (t) abrirTarea(t);
   }
+}
+
+/** En el archivo todo esta completado: el filtro de estado no aplica. */
+function sincronizarBarra() {
+  const sel = raiz.querySelector('#f-status');
+  sel.disabled = enArchivo();
+  if (enArchivo()) { sel.value = ''; filtros.status = ''; }
+
+  const dias = state.settings.archive_after_days;
+  const plural = dias === 1 ? 'día' : 'días';
+  raiz.querySelector('#tareas-nota').textContent = enArchivo()
+    ? `Tareas completadas hace más de ${dias} ${plural}. Siguen contando en Métricas. Para reactivar una, ábrela y cámbiale el estado.`
+    : `El tiempo cuenta solo horas laborales (${describeSchedule(state.settings)}). Las completadas pasan a Archivadas a los ${dias} ${plural}.`;
 }
 
 export function destroy() {
@@ -135,7 +170,10 @@ export function destroy() {
 }
 
 async function recargar() {
-  const { data, error } = await tasksService.list();
+  const origen = vista;
+  raiz.querySelector('#tareas').innerHTML = skeleton(5);
+  const { data, error } = await tasksService.list({ scope: enArchivo() ? 'archived' : 'active' });
+  if (!raiz || (origen === 'archivo') !== enArchivo()) return;   // cambio de pestaña mientras cargaba
   if (error) {
     raiz.querySelector('#tareas').innerHTML = `<div class="card">${empty({
       title: 'No se pudieron cargar las tareas',
@@ -177,6 +215,14 @@ function pintar() {
   if (!host) return;
   destroy();
 
+  if (!tareas.length && enArchivo()) {
+    host.innerHTML = `<div class="card">${empty({
+      title: 'El archivo está vacío',
+      text: `Aquí aparecen las tareas a los ${state.settings.archive_after_days} días de completadas.`,
+    })}</div>`;
+    return;
+  }
+
   if (!tareas.length) {
     host.innerHTML = `<div class="card">${empty({
       title: 'Todavía no hay tareas',
@@ -184,6 +230,12 @@ function pintar() {
       actionHtml: '<button class="btn btn--primary" id="btn-vacio">Crear tarea</button>',
     })}</div>`;
     host.querySelector('#btn-vacio').addEventListener('click', () => abrirTarea(null));
+    return;
+  }
+
+  if (enArchivo()) {
+    // Ya vienen de la mas reciente a la mas vieja; no se reordenan por prioridad.
+    pintarLista(host, aplicarFiltros());
     return;
   }
 
@@ -226,7 +278,7 @@ function pintarLista(host, filas) {
   host.innerHTML = `<div class="card">
     <div class="tlist__row tlist__head" aria-hidden="true">
       <span>Tema</span><span class="tlist__hide">Tipo</span><span class="tlist__hide">Responsables</span>
-      <span class="tlist__hide">Prioridad</span><span>Estado</span><span class="tlist__hide">Límite</span><span class="tlist__hide">Tiempo</span>
+      <span class="tlist__hide">Prioridad</span><span>Estado</span><span class="tlist__hide">${enArchivo() ? 'Completada' : 'Límite'}</span><span class="tlist__hide">Tiempo</span>
     </div>
     ${filas.map(t => `
       <button type="button" class="tlist__row" data-task="${esc(t.id)}">
@@ -241,8 +293,10 @@ function pintarLista(host, filas) {
         <span class="tlist__hide">${avatares(t.assignees)}</span>
         <span class="tlist__hide">${pill(t.priority)}</span>
         <span>${pill(t.status)}</span>
-        <span class="tlist__hide">${fechaLimite(t)}</span>
-        <span class="tlist__hide data muted xs">${esc(fmtDuration(t.started_at, t.finished_at) || (t.started_at ? 'en marcha' : '—'))}</span>
+        <span class="tlist__hide">${enArchivo()
+          ? `<span class="step__dates">${esc(fmtDate(isoDay(t.finished_at), true))}</span>`
+          : fechaLimite(t)}</span>
+        <span class="tlist__hide data muted xs">${esc(tiempo(t))}</span>
       </button>`).join('')}
   </div>`;
 
@@ -260,6 +314,7 @@ function pintarKanban(host, filas) {
     return `<div class="kanban__col">
       <div class="kanban__head">
         <i class="st-key" style="background:${COLOR_ESTADO[st]}"></i>${ETIQUETA[st]}
+        ${st === 'completado' ? `<span class="dim" style="text-transform:none;letter-spacing:0;font-weight:400">· últimos ${state.settings.archive_after_days} d</span>` : ''}
         <span class="data">${items.length}</span>
       </div>
       <div class="kanban__list" data-status="${st}">${items.map(tarjeta).join('')}</div>
@@ -394,11 +449,12 @@ function abrirTarea(tarea) {
         <input class="input" id="tk-end" type="datetime-local" value="${esc(toLocalInput(t.finished_at))}"${dis}>
       </div>
       <div class="field">
-        <label>Tiempo</label>
+        <label>Tiempo laboral</label>
         <div class="duration" id="tk-duration" style="padding-top:8px"></div>
       </div>
     </div>
-    <span class="xs dim" style="margin-top:-8px">Se llenan solos al pasar a En curso y a Completado. Corrígelos si hace falta.</span>
+    <span class="xs dim" style="margin-top:-8px">Se llenan solos al pasar a En curso y a Completado. Corrígelos si hace falta.
+      El tiempo cuenta solo el horario laboral: ${esc(describeSchedule(state.settings))}.</span>
 
     <div class="field">
       <label>Recursos (links a repositorios, Drive, Figma…)</label>
@@ -454,8 +510,9 @@ function abrirTarea(tarea) {
       const durar = () => {
         const a = fromLocalInput(modal.querySelector('#tk-start').value);
         const b = fromLocalInput(modal.querySelector('#tk-end').value);
+        const h = workHours(a, b, state.settings);
         modal.querySelector('#tk-duration').textContent =
-          fmtDuration(a, b) || (a ? 'En marcha' : 'Sin iniciar');
+          h !== null ? fmtHours(h) : a ? 'En marcha' : 'Sin iniciar';
       };
       modal.querySelector('#tk-start').addEventListener('input', durar);
       modal.querySelector('#tk-end').addEventListener('input', durar);
@@ -513,12 +570,21 @@ function abrirTarea(tarea) {
     close();
     toast.success(nueva ? 'Tarea creada' : 'Tarea guardada');
     const fresca = await tasksService.getById(id);
-    if (fresca.data) {
-      tareas = nueva ? [fresca.data, ...tareas] : tareas.map(x => (x.id === id ? fresca.data : x));
-      pintar();
+    if (!fresca.data) { await recargar(); return; }
+
+    // Reabrir una archivada la devuelve a las activas; corregirle el fin a
+    // una vieja la manda al archivo. Si ya no pertenece a esta pestaña, sale.
+    const perteneceAqui = isArchived(fresca.data, state.settings) === enArchivo();
+    const estaba = tareas.some(x => x.id === id);
+    if (!perteneceAqui) {
+      tareas = tareas.filter(x => x.id !== id);
+      toast.info(enArchivo() ? 'La tarea volvió a las tareas activas.' : 'La tarea pasó a Archivadas.');
+    } else if (estaba) {
+      tareas = tareas.map(x => (x.id === id ? fresca.data : x));
     } else {
-      await recargar();
+      tareas = [fresca.data, ...tareas];
     }
+    pintar();
   }
 
   async function eliminar({ close }) {
@@ -534,6 +600,71 @@ function abrirTarea(tarea) {
     tareas = tareas.filter(x => x.id !== tarea.id);
     pintar();
   }
+}
+
+/* --- Horario laboral y archivo (jefe) --------------------------------------- */
+
+function abrirHorario() {
+  const s = state.settings;
+  const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+  openModal({
+    title: 'Horario laboral y archivo',
+    body: `
+      <p class="modal__text">El tiempo de cada tarea cuenta solo las horas dentro de este horario (hora de Ecuador).
+        Cambiarlo recalcula el tiempo de todas las tareas, también las ya completadas.</p>
+      <div class="field">
+        <label>Días laborales</label>
+        <div class="checklist" id="hr-days">
+          ${DIAS.map((d, i) => `<label><input type="checkbox" value="${i + 1}"${s.work_days.includes(i + 1) ? ' checked' : ''}> ${d}</label>`).join('')}
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="hr-start">Hora de entrada</label>
+          <input class="input" id="hr-start" type="time" value="${esc(String(s.work_start).slice(0, 5))}">
+        </div>
+        <div class="field">
+          <label for="hr-end">Hora de salida</label>
+          <input class="input" id="hr-end" type="time" value="${esc(String(s.work_end).slice(0, 5))}">
+        </div>
+      </div>
+      <div class="field">
+        <label for="hr-archive">Archivar las tareas completadas después de (días)</label>
+        <input class="input" id="hr-archive" type="number" min="1" max="365" step="1" value="${esc(s.archive_after_days)}" style="max-width:120px">
+        <span class="xs dim">Días corridos desde que se completó. Archivar no las saca de las Métricas.</span>
+      </div>
+      <p class="error-text" id="hr-error" role="alert"></p>`,
+    actions: [
+      { label: 'Cancelar', variant: 'ghost', onClick: ({ close }) => close() },
+      { label: 'Guardar', variant: 'primary', onClick: async ({ modal, close, btn }) => {
+        const err = modal.querySelector('#hr-error');
+        err.textContent = '';
+        const dias = [...modal.querySelectorAll('#hr-days input:checked')].map(i => Number(i.value));
+        const ini = modal.querySelector('#hr-start').value;
+        const fin = modal.querySelector('#hr-end').value;
+        const arch = Number(modal.querySelector('#hr-archive').value);
+
+        if (!dias.length) { err.textContent = 'Marca al menos un día laboral.'; return; }
+        if (!ini || !fin) { err.textContent = 'Indica la hora de entrada y la de salida.'; return; }
+        if (fin <= ini) { err.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
+        if (!Number.isInteger(arch) || arch < 1 || arch > 365) { err.textContent = 'Los días para archivar van de 1 a 365.'; return; }
+
+        btn.disabled = true;
+        const { error } = await settingsService.update({
+          work_days: dias, work_start: ini, work_end: fin, archive_after_days: arch,
+        });
+        btn.disabled = false;
+        if (error) { err.textContent = traducir(error); return; }
+
+        close();
+        toast.success('Horario guardado');
+        // El corte del archivo pudo cambiar: se vuelve a consultar.
+        sincronizarBarra();
+        await recargar();
+      } },
+    ],
+  });
 }
 
 /* --- Catalogo de tipos (jefe) --------------------------------------------- */

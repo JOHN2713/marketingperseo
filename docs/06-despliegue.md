@@ -21,6 +21,7 @@ En **SQL Editor**, en este orden y uno por uno:
 4. supabase/seed-masterclass.sql
 5. supabase/tasks.sql
 6. supabase/events-audit.sql
+7. supabase/work-hours.sql
 ```
 
 Verificar que RLS quedó activo:

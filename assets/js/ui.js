@@ -152,6 +152,7 @@ const MENSAJES = [
   // GoTrue envuelve cualquier excepcion de un trigger de auth.users en este
   // mensaje generico; el unico trigger que rechaza registros es el de dominio.
   [/database error saving new user/i,   'No se pudo crear la cuenta. Usa tu correo de la empresa.'],
+  [/app_settings_hours/i,               'La hora de salida debe ser posterior a la de entrada.'],
   [/events_time_range/i,                'La hora de fin no puede ser anterior a la de inicio.'],
   [/confirmar o rechazar un evento/i,   'Solo el jefe de área puede confirmar o rechazar un evento.'],
   [/task_resources_url_check/i,         'Algún link no es válido. Debe empezar con http:// o https://'],
@@ -360,20 +361,16 @@ export function applyRoleUI(role) {
   if (label) label.textContent = ROL[role] || 'Usuario';
 }
 
-/** Duracion entre dos timestamps: "3 h 20 min", "2 d 4 h". Nulo si falta uno. */
-export function fmtDuration(fromTs, toTs) {
-  if (!fromTs || !toTs) return null;
-  return fmtHours((new Date(toTs) - new Date(fromTs)) / 3600000);
-}
-
+/**
+ * Horas laborales como "3 h 20 min". No se convierte a dias a proposito:
+ * con jornadas de 9 horas, "1 d" seria ambiguo (¿24 h o una jornada?).
+ */
 export function fmtHours(hours) {
   if (hours === null || hours === undefined || isNaN(hours) || hours < 0) return '—';
   const min = Math.round(hours * 60);
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60), m = min % 60;
-  if (h < 24) return m ? `${h} h ${m} min` : `${h} h`;
-  const d = Math.floor(h / 24), rh = h % 24;
-  return rh ? `${d} d ${rh} h` : `${d} d`;
+  return m ? `${h} h ${m} min` : `${h} h`;
 }
 
 /** Iniciales para el avatar de un responsable. */

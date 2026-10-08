@@ -9,13 +9,15 @@
    - Una tarea con dos responsables cuenta para cada uno; los totales
      del equipo la cuentan una sola vez.
    - Promedio por dia/semana/mes = tareas / dias del rango (/7, /30.44).
-   - Tiempo = fin - inicio, en horas de reloj. Sin alguna de las dos
-     horas la tarea no entra al promedio.
+   - Tiempo = horas laborales entre inicio y fin (worktime.js). Sin
+     alguna de las dos horas la tarea no entra al promedio.
+   - Las tareas archivadas cuentan igual que las demas.
    ===================================================================== */
 import { state, nombreDe } from '../store.js';
 import * as tasksService from '../services/tasks.service.js';
 import { ESTADOS, PRIORIDADES } from '../services/tasks.service.js';
 import { areaName } from '../services/areas.service.js';
+import { describeSchedule } from '../worktime.js';
 import {
   esc, empty, skeleton, today, parseDate, fmtDate, fmtHours,
   traducir, enableTips, ETIQUETA,
@@ -292,7 +294,8 @@ function pintar() {
     </section>
 
     <p class="xs dim mt-4">Una tarea con varios responsables cuenta para cada uno; los totales del equipo la cuentan una vez.
-      El tiempo es el transcurrido entre el inicio y el fin de la actividad (horas de reloj).</p>`;
+      El tiempo cuenta solo horas laborales (${esc(describeSchedule(state.settings))}) entre el inicio y el fin de la actividad.
+      Las tareas archivadas siguen contando en todo el informe.</p>`;
 
   host.querySelectorAll('[data-persona]').forEach(b => b.addEventListener('click', () => {
     if (b.dataset.persona === SIN_ASIGNAR) return;
@@ -385,7 +388,7 @@ function graficoTiempo(lista, personas) {
   if (!filas.length) {
     return empty({
       title: 'Sin tiempos medidos',
-      text: 'Una tarea cuenta aquí cuando tiene hora de inicio y de fin: pásala por En curso y luego a Completado.',
+      text: 'Una tarea cuenta aquí cuando tiene hora de inicio y de fin: pásala por En curso y luego a Completado. Solo se suman las horas dentro del horario laboral.',
     });
   }
   const max = Math.max(...filas.map(f => f.avg)) || 1;

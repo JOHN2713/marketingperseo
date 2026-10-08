@@ -21,6 +21,7 @@ const TABLA = {
   processes: 'Proceso', process_steps: 'Paso de proceso',
   process_templates: 'Plantilla', template_steps: 'Paso de plantilla',
   profiles: 'Usuario',
+  app_settings: 'Configuración',
 };
 
 const MODULOS = {
@@ -28,7 +29,7 @@ const MODULOS = {
   eventos:    { label: 'Eventos',    tables: ['events', 'event_areas'] },
   procesos:   { label: 'Procesos',   tables: ['processes', 'process_steps'] },
   plantillas: { label: 'Plantillas', tables: ['process_templates', 'template_steps'] },
-  catalogos:  { label: 'Catálogos',  tables: ['task_types', 'areas'] },
+  catalogos:  { label: 'Catálogos y configuración', tables: ['task_types', 'areas', 'app_settings'] },
   usuarios:   { label: 'Usuarios',   tables: ['profiles'] },
 };
 
@@ -47,10 +48,13 @@ const CAMPO = {
   is_active: 'Activo', creates_event: 'Crea evento', progress_override: 'Avance manual',
   default_duration_days: 'Duración (días)', icon: 'Ícono', color: 'Color',
   template_id: 'Plantilla', process_id: 'Proceso',
+  work_days: 'Días laborales', work_start: 'Hora de entrada', work_end: 'Hora de salida',
+  archive_after_days: 'Días para archivar',
 };
 
 // Identificadores internos que no le dicen nada a quien lee el registro.
-const OCULTOS = new Set(['id', 'task_id', 'event_id']);
+const OCULTOS = new Set(['id', 'task_id', 'event_id', 'singleton']);
+const DIA_ISO = ['', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
 const PERSONAS = new Set(['assignee_id', 'owner_id', 'created_by', 'profile_id']);
 const MOMENTOS = new Set(['started_at', 'finished_at', 'starts_at', 'ends_at', 'reminder_at']);
 const FECHAS = new Set(['due_date', 'start_date', 'end_date']);
@@ -174,6 +178,8 @@ function valor(campo, v) {
   if (campo === 'area_id') return areaName(v) || 'Área eliminada';
   if (campo === 'template_id') return state.templates.find(t => t.id === v)?.name || 'Plantilla';
   if (campo === 'role') return ROL[v] || v;
+  if (campo === 'work_days' && Array.isArray(v)) return v.map(d => DIA_ISO[d] || d).join(', ');
+  if (campo === 'work_start' || campo === 'work_end') return String(v).slice(0, 5);
   if (MOMENTOS.has(campo)) return fmtDateTime(v);
   if (FECHAS.has(campo)) return fmtDate(v, true);
   if (campo === 'progress_override') return `${v}%`;

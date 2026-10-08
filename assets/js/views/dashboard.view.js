@@ -83,7 +83,7 @@ export async function render(root) {
   }));
 
   const [tareasRes, procRes, pasosRecientes, eventosRes] = await Promise.all([
-    tasksService.list(),
+    tasksService.list({ scope: 'active' }),
     processesService.list(),
     processesService.recentlyCompleted(10),
     eventsService.upcoming(6),

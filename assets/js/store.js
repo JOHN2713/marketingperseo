@@ -4,6 +4,8 @@
    (perfiles del equipo, plantillas activas) para no repetir queries.
    ===================================================================== */
 
+import { DEFAULT_SETTINGS } from './worktime.js';
+
 export const state = {
   user: null,           // auth.users
   profile: null,        // public.profiles
@@ -11,6 +13,7 @@ export const state = {
   templates: [],        // plantillas activas
   taskTypes: [],        // catalogo de tipos de tarea (activos e inactivos)
   areas: [],            // catalogo de areas: solicitante de tareas y responsables de eventos
+  settings: { ...DEFAULT_SETTINGS },   // horario laboral y dias para archivar
   overdue: 0,           // pasos vencidos, alimenta el contador del menu
   attention: [],        // filas de v_steps_attention
 };
@@ -58,6 +61,7 @@ export function reset() {
   state.templates = [];
   state.taskTypes = [];
   state.areas = [];
+  state.settings = { ...DEFAULT_SETTINGS };
   state.overdue = 0;
   state.attention = [];
 }

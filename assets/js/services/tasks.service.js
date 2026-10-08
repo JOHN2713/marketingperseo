@@ -4,6 +4,7 @@
    ===================================================================== */
 import { supabase } from '../supabase.js';
 import { state, isJefe } from '../store.js';
+import { workHours, archiveCutoff } from '../worktime.js';
 
 export const ESTADOS = ['pendiente', 'en_curso', 'en_revision', 'completado', 'bloqueado'];
 export const PRIORIDADES = ['urgente', 'alta', 'media', 'baja'];
@@ -27,9 +28,31 @@ function normalizar(t) {
 /**
  * Lista de tareas. `from` / `to` son fechas 'YYYY-MM-DD' locales y filtran
  * por fecha de creacion (dia de asignacion), ambos extremos incluidos.
+ *
+ * `scope`:
+ *   'all'      todas — lo usan las Metricas: archivar no saca a una tarea
+ *              de ningun promedio.
+ *   'active'   las de trabajo diario: todo lo no completado y lo completado
+ *              hace menos de `archive_after_days`.
+ *   'archived' completadas hace mas de eso, de la mas reciente a la mas vieja.
+ *
+ * El archivo no es una marca guardada: sale de comparar finished_at con el
+ * corte, asi que reabrir una tarea la devuelve sola a las activas.
  */
-export async function list({ from = null, to = null } = {}) {
-  let q = supabase.from('tasks').select(CAMPOS).order('created_at', { ascending: false });
+export async function list({ from = null, to = null, scope = 'all' } = {}) {
+  let q = supabase.from('tasks').select(CAMPOS);
+  const corte = archiveCutoff(state.settings).toISOString();
+
+  if (scope === 'archived') {
+    q = q.eq('status', 'completado').lt('finished_at', corte)
+         .order('finished_at', { ascending: false });
+  } else {
+    if (scope === 'active') {
+      q = q.or(`status.neq.completado,finished_at.is.null,finished_at.gte."${corte}"`);
+    }
+    q = q.order('created_at', { ascending: false });
+  }
+
   if (from) q = q.gte('created_at', new Date(`${from}T00:00:00`).toISOString());
   if (to) {
     const fin = new Date(`${to}T00:00:00`);
@@ -84,10 +107,12 @@ export function canDelete(task) {
   return isJefe() || task.created_by === state.user?.id;
 }
 
-/** Horas entre inicio y fin; null si falta alguna. */
+/**
+ * Horas laborales entre inicio y fin (solo dentro del horario de la
+ * empresa); null si falta alguna de las dos.
+ */
 export function hours(task) {
-  if (!task.started_at || !task.finished_at) return null;
-  return (new Date(task.finished_at) - new Date(task.started_at)) / 3600000;
+  return workHours(task.started_at, task.finished_at, state.settings);
 }
 
 /* --- Tipos de tarea ---------------------------------------------------- */
